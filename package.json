@@ -1,0 +1,22 @@
+{
+  "name": "world-bank-graphing-demo",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Some graphs using World Bank open data.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jimCresswell/world-bank-graphing-demo.git"
+  },
+  "keywords": [
+    "d3",
+    "open data"
+  ],
+  "author": "Jim Cresswell",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jimCresswell/world-bank-graphing-demo/issues"
+  }
+}

@@ -14,7 +14,7 @@ var source = require('vinyl-source-stream');
 
 var config = require('../config').javascript;
 
-
+// Lint and fail the task if the linting fails.
 gulp.task('lint-javascript', function() {
   return gulp.src(config.src)
     .pipe(jshint('.jshintrc'))

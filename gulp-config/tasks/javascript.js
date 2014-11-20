@@ -5,7 +5,6 @@
  */
 
 'use strict';
-/* jshint node:true */
 
 var gulp = require('gulp');
 var jshint = require('gulp-jshint');

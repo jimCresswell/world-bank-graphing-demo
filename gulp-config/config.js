@@ -1,5 +1,4 @@
 'use strict';
-/* jshint node:true */
 
 var src = './src';
 var dest = './build';

@@ -22,7 +22,7 @@ gulp.task('lint-javascript', function() {
     .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('javascript', ['lint-javascript'], function() {
+gulp.task('javascript', ['lint-javascript', 'clean'], function() {
     var bundleStream = browserify(config.clientEntryPoint)
         .bundle();
 

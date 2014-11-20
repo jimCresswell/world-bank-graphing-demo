@@ -11,6 +11,7 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
+var del = require('del');
 
 var config = require('../config').javascript;
 
@@ -22,9 +23,12 @@ gulp.task('lint-javascript', function() {
     .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('javascript', ['lint-javascript', 'clean'], function() {
+gulp.task('javascript', ['lint-javascript'], function() {
     var bundleStream = browserify(config.clientEntryPoint)
         .bundle();
+
+    // Remove existing built javascript.
+    del.sync(config.dest);
 
     /**
      * Pass desired output filename to vinyl-source-stream,

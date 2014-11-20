@@ -17,5 +17,6 @@ module.exports = {
     css: {
         src: src + '/css/**',
         dest: dest + '/css/' 
-    }
+    },
+    webRoot: dest
 };

@@ -9,4 +9,9 @@ Example graphs using World Bank open data.
 ## Usage
 * Clone.
 * `npm install`
+
+To watch for changes, build and serve.
 * `gulp`
+
+To build
+* `gulp build`

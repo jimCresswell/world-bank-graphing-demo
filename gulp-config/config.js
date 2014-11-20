@@ -10,10 +10,10 @@ module.exports = {
         dest: dest + '/'
     },
     javascript: {
+        src: src + '/javascript/**',
+        dest: dest + '/javascript/',
         clientEntryPoint: src + '/javascript/client/index.js',
         clientBundleFilename: 'bundle.js',
-
-        dest: dest + '/javascript/'
     },
     css: {
         src: src + '/css/**',

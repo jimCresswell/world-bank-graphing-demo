@@ -1,0 +1,1 @@
+The entry point for the client side JavaScript and code which requires a DOM to run.

@@ -5,12 +5,15 @@ var browserSync = require('browser-sync');
 
 var config = require('../config');
 
-var pathsToWatch = [
-    config.javascript.src,
-    config.html.src,
-    config.css.src
-];
-
 gulp.task('watch', function() {
-    gulp.watch(pathsToWatch, ['build', browserSync.reload]);
+    // Client code tasks.
+    gulp.watch(config.javascript.srcClient, ['javascript-client']);
+    gulp.watch(config.html.src, ['html']);
+    gulp.watch(config.css.src, ['css']);
+
+    // Non-client JS tasks.
+    //gulp.watch(config.javascript.srcService, ['javascript-service']);
+
+    // Compiled code tasks
+    // gulp.watch(config.webroot + '/**', browserSync.reload);
 });

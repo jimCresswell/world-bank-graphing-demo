@@ -9,14 +9,15 @@ module.exports = {
         dest: dest + '/'
     },
     javascript: {
-        src: src + '/javascript/**',
+        srcService: src + '/javascript/service/**',
+        srcClient: src + '/javascript/client/**',
         dest: dest + '/javascript/',
         clientEntryPoint: src + '/javascript/client/index.js',
         clientBundleFilename: 'bundle.js',
     },
     css: {
         src: src + '/css/**',
-        dest: dest + '/css/' 
+        dest: dest + '/css/'
     },
     webRoot: dest
 };

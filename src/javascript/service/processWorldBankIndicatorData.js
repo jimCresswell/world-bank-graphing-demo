@@ -10,7 +10,16 @@
 
 module.exports = processData;
 
-function processData(csvData) {
+
+/**
+ * Transform a string of World Bank indicator
+ * CSV data into a data structure suitable
+ * for use with D3.
+ *
+ * @param  {string}  csvDataString  String representing CSV data.
+ * @return {object}  data           Object suitable for use as D3 data.
+ */
+function processData(csvDataString) {
     var data = {};
 
     // Failing implementation.

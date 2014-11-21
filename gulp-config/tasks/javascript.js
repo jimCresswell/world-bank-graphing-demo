@@ -21,6 +21,12 @@ var config = require('../config').javascript;
  * Linting.
  */
 
+
+/**
+ * Series of JS Hint stream modifiers.
+ * @param  {string} sourceString defining the files to lint.
+ * @return {stream}
+ */
 function jsHintPipe(sourceString) {
     return gulp.src(sourceString)
         .pipe(jshint('.jshintrc'))
@@ -40,10 +46,24 @@ gulp.task('javascript-lint-service', function() {
  * Testing.
  */
 
-gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
+
+/**
+ * Series of testing stream modifiers.
+ * @param  {string} specSourceString defining the specs to run.
+ * @return {stream}
+ */
+function testPipe(specSourceString) {
     return gulp.src('')
-        .pipe(shell('jasmine-node --noStack ' + config.specService, {ignoreErrors: true}))
+        .pipe(shell('jasmine-node --noStack ' + specSourceString, {ignoreErrors: true}))
         .on('error', gutil.log);
+}
+
+gulp.task('javascript-test-client', ['javascript-lint-client'], function() {
+    return testPipe(config.specClient);
+});
+
+gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
+    return testPipe(config.specService);
 });
 
 

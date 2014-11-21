@@ -32,12 +32,14 @@ gulp.task('javascript-client', ['lint-javascript-client'], function() {
     var bundleStream = browserify(config.clientEntryPoint)
         .bundle();
 
-
-    /**
-     * Pass desired output filename to vinyl-source-stream,
-     * run any intermediate tasks then write to file.
-     */
+    //Pass desired output filename to vinyl-source-stream,
+    // run any intermediate tasks then write to file.
     return bundleStream
         .pipe(source(config.clientBundleFilename))
         .pipe(gulp.dest(config.dest));
+});
+
+gulp.task('javascript-service', ['lint-javascript-service'], function(cb) {
+  // TODO: run service js tests.
+  cb();
 });

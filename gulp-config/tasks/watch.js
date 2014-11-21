@@ -22,8 +22,10 @@ gulp.task('watch', function(cb) {
     });
 
     // Non-client JS tasks.
-    // TODO: run tests on change.
-    //gulp.watch(config.javascript.srcService, ['javascript-service']);
+    watch(config.javascript.srcService, function (files, cb) {
+        gulp.start('javascript-service');
+        cb();
+    });
 
     // Compiled code tasks
     watch(config.destWatch, function (files, cb) {

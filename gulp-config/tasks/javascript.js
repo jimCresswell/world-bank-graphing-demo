@@ -23,7 +23,7 @@ gulp.task('javascript-lint-client', function() {
         .pipe(jshint.reporter(stylish));
 });
 gulp.task('javascript-lint-service', function() {
-    return gulp.src(config.srcClient)
+    return gulp.src(config.srcService)
         .pipe(jshint('.jshintrc'))
         .pipe(jshint.reporter(stylish));
 });

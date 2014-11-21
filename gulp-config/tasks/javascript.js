@@ -46,24 +46,13 @@ gulp.task('javascript-lint-service', function() {
  * Testing.
  */
 
+// TODO: test code that relies on a DOM.
 
-/**
- * Series of testing stream modifiers.
- * @param  {string} specSourceString defining the specs to run.
- * @return {stream}
- */
-function testPipe(specSourceString) {
-    return gulp.src('')
-        .pipe(shell('jasmine-node --noStack ' + specSourceString, {ignoreErrors: true}))
-        .on('error', gutil.log);
-}
-
-gulp.task('javascript-test-client', ['javascript-lint-client'], function() {
-    return testPipe(config.specClient);
-});
-
+// Test code that does not rely on a DOM.
 gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
-    return testPipe(config.specService);
+    return gulp.src('')
+        .pipe(shell('jasmine-node --noStack ' + config.specService, {ignoreErrors: true}))
+        .on('error', gutil.log);
 });
 
 
@@ -78,6 +67,7 @@ gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
 gulp.task('javascript-client', ['javascript-lint-client'], function() {
     var bundleTextStream = browserify(config.clientEntryPoint)
         .bundle();
+
     return bundleTextStream
         .pipe(source(config.clientBundleFilename))
         .pipe(gulp.dest(config.dest));

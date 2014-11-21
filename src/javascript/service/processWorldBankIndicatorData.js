@@ -13,5 +13,6 @@ module.exports = processData;
 function processData(csvData) {
     var data = {};
 
-    return data;
+    // Failing implementation.
+    return null;
 }

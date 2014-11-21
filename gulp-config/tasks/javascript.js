@@ -16,24 +16,40 @@ var gutil = require('gulp-util');
 
 var config = require('../config').javascript;
 
-// Linting
+
+/**
+ * Linting.
+ */
+
+function jsHintPipe(sourceString) {
+    return gulp.src(sourceString)
+        .pipe(jshint('.jshintrc'))
+        .pipe(jshint.reporter(stylish));
+}
+
 gulp.task('javascript-lint-client', function() {
-    return gulp.src(config.srcClient)
-        .pipe(jshint('.jshintrc'))
-        .pipe(jshint.reporter(stylish));
-});
-gulp.task('javascript-lint-service', function() {
-    return gulp.src(config.srcService)
-        .pipe(jshint('.jshintrc'))
-        .pipe(jshint.reporter(stylish));
+    return jsHintPipe(config.srcClient);
 });
 
-// Testing
+gulp.task('javascript-lint-service', function() {
+    return jsHintPipe(config.srcService);
+});
+
+
+/**
+ * Testing.
+ */
+
 gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
     return gulp.src('')
-        .pipe(shell('jasmine-node --noStack  ./spec/service', {ignoreErrors: true}))
+        .pipe(shell('jasmine-node --noStack ' + config.specService, {ignoreErrors: true}))
         .on('error', gutil.log);
 });
+
+
+/**
+ * Main tasks.
+ */
 
 // Get a text stream from browserify,
 // pipe to vinyl-source-stream with an output

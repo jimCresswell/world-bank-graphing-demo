@@ -2,6 +2,7 @@
 
 var src = './src';
 var dest = './build';
+var spec = './spec';
 
 module.exports = {
     html: {
@@ -11,9 +12,11 @@ module.exports = {
     javascript: {
         srcService: src + '/javascript/service/**',
         srcClient: src + '/javascript/client/**',
-        dest: dest + '/javascript/',
+        specService: spec + '/service',
+        specClient: spec + '/client',
         clientEntryPoint: src + '/javascript/client/index.js',
         clientBundleFilename: 'bundle.js',
+        dest: dest + '/javascript/',
     },
     css: {
         src: src + '/css/**',

@@ -1,19 +1,35 @@
 'use strict';
 
 var gulp = require('gulp');
-var browserSync = require('browser-sync');
+var watch = require('gulp-watch');
 
 var config = require('../config');
 
-gulp.task('watch', function() {
+gulp.task('watch', function(cb) {
+
     // Client code tasks.
-    gulp.watch(config.javascript.srcClient, ['javascript-client']);
-    gulp.watch(config.html.src, ['html']);
-    gulp.watch(config.css.src, ['css']);
+    watch(config.javascript.srcClient, function (files, cb) {
+        gulp.start('javascript-client');
+        cb();
+    });
+    watch(config.html.src, function (files, cb) {
+        gulp.start('html');
+        cb();
+    });
+    watch(config.css.src, function (files, cb) {
+        gulp.start('css');
+        cb();
+    });
 
     // Non-client JS tasks.
+    // TODO: run tests on change.
     //gulp.watch(config.javascript.srcService, ['javascript-service']);
 
     // Compiled code tasks
-    // gulp.watch(config.webroot + '/**', browserSync.reload);
+    watch(config.destWatch, function (files, cb) {
+        gulp.start('serve-reload');
+        cb();
+    });
+
+    cb();
 });

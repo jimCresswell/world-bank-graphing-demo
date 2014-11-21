@@ -11,7 +11,6 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
-var del = require('del');
 
 var config = require('../config').javascript;
 
@@ -32,9 +31,6 @@ gulp.task('lint-javascript-service', function() {
 gulp.task('javascript-client', ['lint-javascript-client'], function() {
     var bundleStream = browserify(config.clientEntryPoint)
         .bundle();
-
-    // Remove existing built javascript.
-    del.sync(config.dest);
 
 
     /**

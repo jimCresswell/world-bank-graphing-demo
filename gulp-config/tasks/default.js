@@ -2,4 +2,8 @@
 
 var gulp = require('gulp');
 
-gulp.task('default', ['build', 'serve', 'watch']);
+gulp.task('default', ['build'], function(cb) {
+    gulp.start('serve');
+    gulp.start('watch');
+    cb();
+});

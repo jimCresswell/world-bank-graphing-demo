@@ -19,5 +19,6 @@ module.exports = {
         src: src + '/css/**',
         dest: dest + '/css/'
     },
-    webRoot: dest
+    webRoot: dest,
+    destWatch: dest + '/**/*'
 };

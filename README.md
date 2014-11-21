@@ -4,7 +4,7 @@ Example graphs using World Bank open data.
 
 ## Development requirements
 * Node and npm.
-* Gulp CLI installed globally with npm.
+* Gulp installed globally with npm.
 
 ## Usage
 * Clone.

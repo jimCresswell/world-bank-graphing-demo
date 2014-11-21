@@ -16,16 +16,16 @@ var config = require('../config').javascript;
 
 // Lint and fail the task if the linting fails.
 gulp.task('lint-javascript-client', function() {
-  return gulp.src(config.srcClient)
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter(stylish))
-    .pipe(jshint.reporter('fail'));
+    return gulp.src(config.srcClient)
+        .pipe(jshint('.jshintrc'))
+        .pipe(jshint.reporter(stylish))
+        .pipe(jshint.reporter('fail'));
 });
 gulp.task('lint-javascript-service', function() {
-  return gulp.src(config.srcClient)
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter(stylish))
-    .pipe(jshint.reporter('fail'));
+    return gulp.src(config.srcClient)
+        .pipe(jshint('.jshintrc'))
+        .pipe(jshint.reporter(stylish))
+        .pipe(jshint.reporter('fail'));
 });
 
 gulp.task('javascript-client', ['lint-javascript-client'], function() {
@@ -40,6 +40,6 @@ gulp.task('javascript-client', ['lint-javascript-client'], function() {
 });
 
 gulp.task('javascript-service', ['lint-javascript-service'], function(cb) {
-  // TODO: run service js tests.
-  cb();
+    // TODO: run service js tests.
+    cb();
 });

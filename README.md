@@ -5,7 +5,7 @@ Example graphs using World Bank open data.
 ## Development requirements
 * Node and npm.
 * Gulp installed globally with npm.
-* Jasmine installed globally with npm.
+* jasmine-node installed globally with npm.
 
 ## Usage
 * Clone.

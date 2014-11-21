@@ -11,6 +11,8 @@ var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
+var shell = require('gulp-shell');
+var gutil = require('gulp-util');
 
 var config = require('../config').javascript;
 
@@ -39,7 +41,8 @@ gulp.task('javascript-client', ['lint-javascript-client'], function() {
         .pipe(gulp.dest(config.dest));
 });
 
-gulp.task('javascript-service', ['lint-javascript-service'], function(cb) {
-    // TODO: run service js tests.
-    cb();
+gulp.task('javascript-service', ['lint-javascript-service'], function() {
+    return gulp.src('')
+        .pipe(shell('jasmine-node --noStack  ./spec/', {ignoreErrors: true}))
+        .on('error', gutil.log);
 });

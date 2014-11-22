@@ -7,9 +7,11 @@
  * this module is for transforming the CSV format data
  * into a nested JavaScript object and array format.
  */
+'use strict';
 
 module.exports = processData;
 
+var csvParse = require('csv-parse');
 
 /**
  * Transform a string of World Bank indicator
@@ -17,11 +19,41 @@ module.exports = processData;
  * for use with D3.
  *
  * @param  {string}  csvDataString  String representing CSV data.
- * @return {object}  data           Object suitable for use as D3 data.
+ * @param {function} cb A callback taking an err object and optional data object suitable for use as D3 data.
+ * @return {undefined}
  */
-function processData(csvDataString) {
-    var data = {};
+function processData(csvDataString, cb) {
 
-    // Failing implementation.
-    return null;
+    // Parse the CSV data into an object using csv-parse.
+    csvParse(csvDataString,
+        {
+            columns: true
+        },
+        function(err, output) {
+        if (err) {
+            cb(err);
+            return;
+        }
+        cb(null, reformat(output));
+    });
+}
+
+/**
+ * Reformat the data object from the format
+ * returned by CSV-Parse to the desired
+ * format.
+ *
+ * @param  {object} dataObject
+ * @return {object} dataObject
+ */
+function reformat(dataObject) {
+
+    // TODO: reformat the object.
+
+    // DEBUG
+    // TODO: strip out the empty lines at the end of the input data.
+    //
+    console.log(dataObject);
+
+    return dataObject;
 }

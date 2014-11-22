@@ -10,8 +10,8 @@ module.exports = {
         dest: dest + '/'
     },
     javascript: {
-        srcService: src + '/javascript/service/**',
-        srcClient: src + '/javascript/client/**',
+        srcService: src + '/javascript/service/**/*.js',
+        srcClient: src + '/javascript/client/**/*.js',
         specService: spec + '/service',
         specClient: spec + '/client',
         clientEntryPoint: src + '/javascript/client/index.js',

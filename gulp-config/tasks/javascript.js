@@ -62,7 +62,7 @@ gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
 
 // Get a text stream from browserify,
 // pipe to vinyl-source-stream with an output
-// filename argument to create a buffer stream,
+// filename argument to create a vinyl stream,
 // run any intermediate tasks then write to file.
 gulp.task('javascript-client', ['javascript-lint-client'], function() {
     var bundleTextStream = browserify(config.clientEntryPoint)

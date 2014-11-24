@@ -22,6 +22,10 @@ module.exports = {
         src: src + '/css/**',
         dest: dest + '/css/'
     },
+    data: {
+        src: src + '/data/**/*.csv',
+        dest: dest + '/data/'
+    },
     webRoot: dest,
     destWatch: dest + '/**/*'
 };

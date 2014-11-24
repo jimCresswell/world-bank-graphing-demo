@@ -5,6 +5,6 @@ var runSequence = require('run-sequence');
 
 gulp.task('build', function (cb) {
     runSequence('clean',
-        ['javascript-client', 'html', 'css'],
+        ['javascript-client', 'html', 'css', 'data'],
         cb);
 });

@@ -7,6 +7,8 @@
  * this module is for transforming the CSV format data
  * into a nested JavaScript object and array format.
  */
+/* jshint camelcase:false */
+
 'use strict';
 
 module.exports = processData;
@@ -24,10 +26,21 @@ var csvParse = require('csv-parse');
  */
 function processData(csvDataString, cb) {
 
+    // Remove non-data lines from the input string.
+    csvDataString = csvDataString
+                        .replace(/,,.+/gm, '')
+                        .replace(/Data from.+/i, '')
+                        .replace(/Last Updated.+/i, '');
+
+    // Standardise the representation of empty fields.
+    csvDataString = csvDataString
+                        .replace(/,NA/g, ',,');
+
     // Parse the CSV data into an object using csv-parse.
     csvParse(csvDataString,
         {
-            columns: true
+            columns: true,
+            skip_empty_lines: true
         },
         function(err, output) {
         if (err) {

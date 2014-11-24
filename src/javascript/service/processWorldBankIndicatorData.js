@@ -15,6 +15,7 @@ module.exports = processData;
 
 var csvParse = require('csv-parse');
 
+
 /**
  * Transform a string of World Bank indicator
  * CSV data into a data structure suitable
@@ -34,22 +35,30 @@ function processData(csvDataString, cb) {
 
     // Standardise the representation of empty fields.
     csvDataString = csvDataString
-                        .replace(/,NA/g, ',,');
+                        .replace(/,NA/g, ',');
 
-    // Parse the CSV data into an object using csv-parse.
-    csvParse(csvDataString,
-        {
+    // Remove year codes.
+    csvDataString = csvDataString
+                        .replace(/\s\[YR\d\d\d\d\]/gm, '');
+
+    // Parse the CSV data into an object
+    // using csv-parse and pass it to
+    // the callback via the
+    // reformat function.
+    csvParse(csvDataString, {
             columns: true,
             skip_empty_lines: true
         },
         function(err, output) {
-        if (err) {
-            cb(err);
-            return;
+            if (err) {
+                cb(err);
+                return;
+            }
+            cb(null, reformat(output));
         }
-        cb(null, reformat(output));
-    });
+    );
 }
+
 
 /**
  * Reformat the data object from the format
@@ -57,16 +66,38 @@ function processData(csvDataString, cb) {
  * format.
  *
  * @param  {object} dataObject
- * @return {object} dataObject
+ * @return {object} output
  */
 function reformat(dataObject) {
+    var output = {};
 
-    // TODO: reformat the object.
+    // For each set of input key value pairs
+    // add the values to the appropriate
+    // object in the output data.
+    dataObject.forEach(function(inputSet) {
+        var countryName = inputSet['Country Name'];
+        var indicatorName = inputSet['Series Name'];
 
-    // DEBUG
-    // TODO: strip out the empty lines at the end of the input data.
-    //
-    console.log(dataObject);
+        // Countries can appear many times in the input
+        // but should map to just one key in the output.
+        var country = (output[countryName] = output[countryName] || {});
 
-    return dataObject;
+        // Combinations of country and indicator are
+        // unique so this is always a new array.
+        var indicator = country[indicatorName] = [];
+
+        // If the key is a year then add
+        // the data to the indicators
+        // array of values.
+        (Object.keys(inputSet)).forEach(function(key) {
+            if(key.search(/^\d\d\d\d$/) === 0) {
+                indicator.push({
+                    year: key,
+                    value: inputSet[key]
+                });
+            }
+        });
+    });
+
+    return output;
 }

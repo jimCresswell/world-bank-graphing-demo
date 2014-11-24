@@ -54,7 +54,11 @@ function processData(csvDataString, cb) {
                 cb(err);
                 return;
             }
-            cb(null, reformat(output));
+            try {
+                cb(null, reformat(output));
+            } catch (error) {
+                cb(error);
+            }
         }
     );
 }

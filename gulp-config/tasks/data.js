@@ -18,6 +18,8 @@ gulp.task('data', function() {
 
 // Transform the CSV data file into a JSON
 // encoded nested data object file.
+// Roughly based on http://stackoverflow.com/questions/22835609/gulp-ondata-how-to-pass-data-to-next-pipe
+// Docs for writing plugins https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/README.md
 function transformData() {
   function transform(fileStream, cb) {
 

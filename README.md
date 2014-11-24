@@ -11,8 +11,11 @@ Example graphs using World Bank open data.
 * Clone.
 * `npm install`
 
-To watch for changes, build and serve.
+To watch for changes, lint, test, build and serve.
 * `gulp`
 
-To build
+To build.
 * `gulp build`
+
+To build just the data.
+* `gulp data`

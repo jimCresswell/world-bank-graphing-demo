@@ -1,3 +1,7 @@
+/**
+ * The top level client-side JavaScript file.
+ */
+
 (function() {
     'use strict';
 

@@ -95,6 +95,7 @@ Chart.prototype.draw = function() {
 Chart.prototype.onResize = function() {
     var dimensions = this.getDimensionsFromDom();
 
+    // If resizing the viewport has resized the SVG then re-draw.
     if (this.width !== dimensions.width || this.height !== dimensions.height) {
         this.width = dimensions.width;
         this.height = dimensions.height;

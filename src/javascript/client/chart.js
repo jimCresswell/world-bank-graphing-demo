@@ -22,6 +22,11 @@ function Chart(chartOptions) {
     var chart = this;
     var dimensions;
 
+    // Cope with lack of 'new' keyword.
+    if (!(chart instanceof Chart)){
+        return new Chart(chartOptions);
+    }
+
     chart.id = '';
     chart.width = 0;
     chart.height = 0;

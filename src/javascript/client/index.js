@@ -6,7 +6,7 @@
     'use strict';
 
     var dataService = require('./dataService');
-    var Chart = require('./Chart');
+    var Chart = require('./chart');
 
     var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
 

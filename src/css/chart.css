@@ -2,37 +2,41 @@
 
 }
 
-.chart-container svg {
+.chart-container > h2 {
+    margin-bottom: 0.5em;
+}
+
+.chart-container > svg {
     display: block;
     width: 300px;
     height: 200px;
-    margin: 2em auto;
+    margin: 1em auto;
     background-color: red;
 }
 
 @media (min-width: 480px) {
-    .chart-container svg {
+    .chart-container > svg {
         width: 400px;
         height: 233px;
     }
 }
 
 @media (min-width: 600px) {
-    .chart-container svg {
+    .chart-container > svg {
         width: 500px;
         height: 266px;
     }
 }
 
 @media (min-width: 800px) {
-    .chart-container svg {
+    .chart-container > svg {
         width: 600px;
         height: 400px;
     }
 }
 
 @media (min-width: 1280px) {
-    .chart-container svg {
+    .chart-container > svg {
         width: 750px;
         height: 500px;
     }

@@ -10,17 +10,22 @@
 
     var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
 
+    var chartOptions = {
+        id: 'chart1--svg',
+        data: false
+    };
+
     dataService.getData(dataUrlPath)
         .then(function(data) {
-            var chartOptions = {
-                id: 'chart1--svg',
-                data: data
-            };
 
-            // DEBUG
-            console.log(data);
+            chartOptions.data = data;
 
-            // new Chart(chartOptions);
+            // Deliberately using 'load' event because
+            // it blocks on stylesheet loading and the
+            // svg dimensions are taken from the DOM.
+            window.addEventListener('load', function() {
+                new Chart(chartOptions);
+            });
         })
         .done();
 })();

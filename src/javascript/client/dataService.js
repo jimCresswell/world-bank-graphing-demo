@@ -1,10 +1,12 @@
 /**
  * Data service
+ *
+ * Browser only.
  */
 'use strict';
 
-var request = require('superagent');
-var Q = require('q');
+var get = require('superagent').get;
+var defer = require('q').defer;
 
 module.exports = {
     getData: getData
@@ -12,9 +14,9 @@ module.exports = {
 
 
 function getData(dataUrlPath) {
-    var deferred = Q.defer();
+    var deferred = defer();
 
-    request.get(dataUrlPath, function(res) {
+    get(dataUrlPath, function(res) {
         if (res.error) {
             deferred.reject(res.error);
         } else {

@@ -15,12 +15,9 @@ module.exports = Chart;
  * @param {object} chartOptions Chart construction options
  *                              id: [required, string] id of svg element to target.
  *                              data: [required, object] the data to chart.
- *                              width: [optional, number|string] svg width in pixels.
- *                              height: [optional, number|string] svg height in pixels.
  */
 function Chart(chartOptions) {
     var chart = this;
-    var dimensions;
 
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
@@ -28,8 +25,7 @@ function Chart(chartOptions) {
     }
 
     chart.id = '';
-    chart.width = 0;
-    chart.height = 0;
+    chart.dimensions = {};
     chart.sizeSupplied = false;
     chart.svg = null;
 
@@ -44,31 +40,7 @@ function Chart(chartOptions) {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 
-    if (chartOptions.width && chartOptions.height) {
-        chart.sizeSupplied = true;
-        chart.width = parseInt(chartOptions.width);
-        chart.height = parseInt(chartOptions.height);
-    } else {
-        dimensions = chart.getDimensionsFromDom();
-        chart.width = dimensions.width;
-        chart.height = dimensions.height;
-    }
-
-    if (!chart.width || !chart.height) {
-        throw new RangeError(
-            'The chart size options, width: ' +
-            chart.width +
-            ', height: ' +
-            chart.height +
-            ' are invalid'
-        );
-    }
-
-    // If explicit sizes were supplied then
-    // set the style on the SVG object.
-    if (chart.sizeSupplied) {
-        chart.setDimensionStyles();
-    }
+    chart.recordDimensions();
 
     if (!chartOptions.data) {
         throw new TypeError('Please suppply data for the chart.');
@@ -81,29 +53,52 @@ function Chart(chartOptions) {
 }
 
 
-Chart.prototype.getDimensionsFromDom = function() {
-    return this.svg.getBoundingClientRect();
-};
-
-
-Chart.prototype.setDimensionStyles = function() {
-    // TODO set the width and height on the svg element using d3.
-};
-
-
 Chart.prototype.draw = function() {
     // TODO draw the chart with d3.
     console.log('Drawing...');
 };
 
 
-Chart.prototype.onResize = function() {
-    var dimensions = this.getDimensionsFromDom();
+Chart.prototype.getDimensionsFromDom = function() {
+    var dimensions = this.svg.getBoundingClientRect();
 
-    // If resizing the viewport has resized the SVG then re-draw.
-    if (this.width !== dimensions.width || this.height !== dimensions.height) {
-        this.width = dimensions.width;
-        this.height = dimensions.height;
+    if (!dimensions.width || !dimensions.height) {
+        throw new RangeError(
+            'The chart sizes, width: ' +
+            dimensions.width +
+            ', height: ' +
+            dimensions.height +
+            ' are invalid. Please set the height and width styles on the SVG element inline or with CSS.'
+        );
+    }
+
+    return dimensions;
+};
+
+
+/**
+ * Record the chart dimensions take from the DOM.
+ *
+ * @return {boolean} true if the dimensions changed, false otherwise.
+ */
+Chart.prototype.recordDimensions = function() {
+    var oldDimensions = this.dimensions;
+    var newDimensions = this.getDimensionsFromDom();
+
+    if (newDimensions.width !== oldDimensions.width || newDimensions.height !== oldDimensions.height) {
+        this.dimensions = newDimensions;
+        return true;
+    }
+    return false;
+};
+
+
+/**
+ * If resizing the viewport has resized the SVG then re-draw.
+ * @return {undefined}
+ */
+Chart.prototype.onResize = function() {
+    if (this.recordDimensions()) {
         this.draw();
     }
 };

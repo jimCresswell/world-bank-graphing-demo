@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/chart.css">
 
     <!-- bundle.js is created by Browserify -->
     <script src="javascript/bundle.js" async></script>
@@ -25,9 +26,21 @@
         <h1>World Growth Indicators</a></h1>
         <p>A graph of some world growth indicators using open data <a href="http://data.worldbank.org/topic/financial-sector#tp_wdi">downloaded from the World Bank</a>.</p>
       </header>
-      <section>
-        <h2>Graphs</h2>
-        <p>This is where the graph controls and the graph itself will go.</p>
+      <section class="chart-container chart1">
+        <form id="indices-control">
+          <fieldset form="indices-control">
+            <legend>Choose indices</legend>
+            <label for="chart1--select--horizontal">horizontal</label>
+            <select name="horizontal" id="chart1--select--horizontal">
+              <option value="default">default</option>
+            </select>
+            <label for="chart1--select--vertical">vertical</label>
+            <select name="vertical" id="chart1--select--vertical">
+              <option value="default">default</option>
+            </select>
+          </fieldset>
+        </form>
+        <svg></svg>
       </section>
       <footer>
         <section class="external-nav">

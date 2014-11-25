@@ -1,7 +1,6 @@
 /**
- * Chart module.
+ * Chart module initialisation, housekeeping, event listeners.
  *
- * Browser only.
  */
 'use strict';
 
@@ -16,18 +15,18 @@ module.exports = Chart;
  *                              id: [required, string] id of svg element to target.
  *                              data: [required, object] the data to chart.
  */
-function Chart(chartOptions) {
+function Chart(chartOptions, data) {
     var chart = this;
-
-    // Cope with lack of 'new' keyword.
-    if (!(chart instanceof Chart)){
-        return new Chart(chartOptions);
-    }
 
     chart.id = '';
     chart.dimensions = {};
-    chart.sizeSupplied = false;
     chart.svg = null;
+    chart.data = false;
+
+    // Cope with lack of 'new' keyword.
+    if (!(chart instanceof Chart)){
+        return new Chart(chartOptions, data);
+    }
 
     if (!chartOptions.id) {
         throw new TypeError('Please supply a chart id.');
@@ -42,20 +41,23 @@ function Chart(chartOptions) {
 
     chart.recordDimensions();
 
-    if (!chartOptions.data) {
+    if (!data) {
         throw new TypeError('Please suppply data for the chart.');
     }
-    chart.data = chartOptions.data;
+
+    chart.data = data;
 
     chart.addResizeListener();
 
-    chart.draw();
+    // TODO instantiate an event delegate.
+    // TODO add chart type specific event listeners, pass in an event delegate to add them to.
+    // TODO override the draw method with the chart type specific method.
 }
 
 
 Chart.prototype.draw = function() {
     // TODO draw the chart with d3.
-    console.log('Drawing...');
+    console.warn('Chart.draw has not been overriden with a chart type specific method.');
 };
 
 

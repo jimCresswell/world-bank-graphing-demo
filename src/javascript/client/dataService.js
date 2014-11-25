@@ -1,7 +1,5 @@
 /**
- * Data service
- *
- * Browser only.
+ * Data service.
  */
 'use strict';
 

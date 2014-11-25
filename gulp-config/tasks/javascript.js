@@ -65,12 +65,16 @@ gulp.task('javascript-test-service', ['javascript-lint-service'], function() {
 // filename argument to create a vinyl stream,
 // run any intermediate tasks then write to file.
 gulp.task('javascript-client', ['javascript-lint-client'], function() {
+
+    // TODO: this is fragile, if an error is thrown
+    // in Browserify the watch process drops out.
     var bundleTextStream = browserify(config.clientEntryPoint)
         .bundle();
 
     return bundleTextStream
         .pipe(source(config.clientBundleFilename))
-        .pipe(gulp.dest(config.dest));
+        .pipe(gulp.dest(config.dest))
+        .on('error', gutil.log);
 });
 
 gulp.task('javascript-service', ['javascript-lint-service', 'javascript-test-service']);

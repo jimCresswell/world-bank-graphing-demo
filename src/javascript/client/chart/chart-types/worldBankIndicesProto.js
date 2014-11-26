@@ -21,6 +21,24 @@ exports.init = function() {
 };
 
 
+exports.addData = function(rawData) {
+    var data = this.data = {};
+
+    // rawData[region][index] == [{year:, value:},{year:, value:},...]
+    data.rawData = rawData;
+
+    // Get the geographical regions.
+    var regions = data.regions = Object.keys(rawData);
+
+    // Each region has the same development indices.
+    var indices = data.indices = Object.keys(rawData[regions[0]]);
+
+    // Each index has the same years.
+    data.years = (rawData[regions[0]][indices[0]]).map(function(indexPoint) {
+        return indexPoint.year;
+    });
+}
+
 
 exports.update = function() {
     // TODO: calculate scales.

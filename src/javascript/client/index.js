@@ -53,7 +53,7 @@ function init(data) {
 
     addResizeListener();
 
-    // Bind the data and draw the chart.
+    // Calculate scales and draw the chart.
     chart.update();
 
     // Call onResize at most once every throttleLimit milliseconds.

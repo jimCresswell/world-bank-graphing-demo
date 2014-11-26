@@ -21,46 +21,48 @@ module.exports = Chart;
 function Chart(chartOptions, data) {
     var chart = this;
 
-    // Hint at expected chart properties.
-    chart.id = '';
+    // Chart object properties.
+    chart.id = chartOptions.id;
+    chart.svg = chartOptions.svg;
     chart.dimensions = {};
-    chart.data = false;
-    chart.svg = null;
+    chart.data = {};
     chart.d3Objects = {};
-
 
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
         return new Chart(chartOptions, data);
     }
 
-    chart.id = chartOptions.id;
-    chart.svg = chartOptions.svg;
-
     if (chart.svg.tagName !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 
-    chart.recordDimensions();
-
     if (!data) {
         throw new TypeError('Please suppply data for the chart.');
     }
-
-    chart.data = data;
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
-    // Make some initial assignments.
+    // Record the initial dimensions of the chart
+    // so that scales can be caculated and calls
+    // to chart.onResize will work the first time.
+    chart.recordDimensions();
+
+    // Do some setup.
     chart.init();
+
+    // Add the data
+    chart.addData(data);
 }
+
 
 Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
 };
+
 
 Chart.prototype.update = function() {
     console.warn('Chart.update has not been overriden with a chart type specific method.');
@@ -72,8 +74,19 @@ Chart.prototype.draw = function() {
 };
 
 
+Chart.prototype.addData = function() {
+    console.warn('Chart.addData has not been overriden with a chart type specific method.');
+};
+
+
 Chart.prototype.getDimensionsFromDom = function() {
-    var dimensions = this.svg.getBoundingClientRect();
+    var dimensions;
+
+    if (!this.svg) {
+        throw new TypeError('Don\'t try and measure the SVG before assigning it to the Chart object.');
+    }
+
+    dimensions = this.svg.getBoundingClientRect();
 
     if (!dimensions.width || !dimensions.height) {
         throw new RangeError(

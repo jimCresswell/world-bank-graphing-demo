@@ -1,3 +1,6 @@
+/* Manually add imports here. */
+@import url("chart--world-bank-indices.css");
+
 .chart-container {
 
 }
@@ -40,9 +43,4 @@
         width: 750px;
         height: 500px;
     }
-}
-
-.chart-container > svg circle,
-.chart-container > svg rect {
-    fill: red;
 }

@@ -31,9 +31,8 @@ Controls.prototype.populate = function(data) {
  * Bind updates on the controls to a method on the chart object
  * to update the chart x and y accessors and cause a redraw.
  *
- * Could do this via events fired on the
- * window but I think tight coupling is
- * okay in this case.
+ * Could do this via pub-sub but I think
+ * tight coupling is okay in this case.
  *
  * @param  {object} chart A Chart object.
  * @return {undefined}

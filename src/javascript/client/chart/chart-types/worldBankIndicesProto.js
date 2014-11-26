@@ -7,7 +7,7 @@ var d3 = require('d3');
 
 var cssClass = 'chart--world-bank-indices';
 
-exports.init = function(baseChartProto) {
+exports.init = function() {
     this.cssClass = cssClass;
     this.d3svg = d3.select(this.svg);
     this.d3svg.classed(cssClass, true);

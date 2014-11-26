@@ -22,6 +22,9 @@ exports.update = function() {
 
 
 exports.draw = function() {
+    // DEBUG
+    console.log('drawing...');
+
     this.d3svg
         .selectAll('cirlce')
         .data([10,20,30,40,50])

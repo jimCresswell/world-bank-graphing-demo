@@ -26,22 +26,25 @@
         <h1>World Growth Indicators</a></h1>
         <p>A graph of some world growth indicators using open data <a href="http://data.worldbank.org/topic/financial-sector#tp_wdi">downloaded from the World Bank</a>.</p>
       </header>
-      <section class="chart-container">
-        <h2>Chart 1</h2>
-        <form id="indices-control">
-          <fieldset form="indices-control">
-            <legend>Choose indices</legend>
-            <label for="chart1-select-horizontal">horizontal</label>
-            <select name="horizontal" id="chart1-select-horizontal">
-              <option value="default">default</option>
-            </select>
-            <label for="chart1-select-vertical">vertical</label>
-            <select name="vertical" id="chart1-select-vertical">
-              <option value="default">default</option>
-            </select>
-          </fieldset>
-        </form>
-        <svg id="chart1-svg" class="chart"></svg>
+      <section class="charts">
+        <h2>Charts</h2>
+        <article class="chart-container">
+          <form id="indices-control">
+            <fieldset form="indices-control">
+              <legend>Choose indices</legend>
+              <label for="chart1-select-horizontal">horizontal</label>
+              <select name="horizontal" id="chart1-select-horizontal">
+                <option value="default">default</option>
+              </select>
+              <label for="chart1-select-vertical">vertical</label>
+              <select name="vertical" id="chart1-select-vertical">
+                <option value="default">default</option>
+              </select>
+            </fieldset>
+          </form>
+          <hr>
+          <svg id="chart1-svg" class="chart"></svg>
+        </article>
       </section>
       <footer>
         <section class="external-nav">

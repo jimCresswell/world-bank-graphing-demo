@@ -1,33 +1,33 @@
 /* Manually add imports here. */
 @import url("chart--world-bank-indices.css");
 
-.chart-container {
-
+/* Optional '.charts' container */
+.charts {
+    text-align: center;
 }
 
-.chart-container > h2 {
-    margin-bottom: 0.5em;
+.chart-container {
+    display: inline-block;
+    text-align: left;
+    border: 1px solid #c0c0c0;
 }
 
 .chart-container > svg {
-    display: block;
     width: 300px;
     height: 200px;
-    margin: 1em auto;
-    border: 1px solid #c0c0c0;
 }
 
 @media (min-width: 480px) {
     .chart-container > svg {
         width: 400px;
-        height: 233px;
+        height: 267px;
     }
 }
 
 @media (min-width: 600px) {
     .chart-container > svg {
         width: 500px;
-        height: 266px;
+        height: 333px;
     }
 }
 
@@ -44,3 +44,22 @@
         height: 500px;
     }
 }
+
+
+.chart-container > form,
+.chart-container > svg {
+    padding: 1em;
+}
+
+.chart-container > form legend {
+    padding-bottom: 0.5em;
+}
+
+.chart-container hr {
+    border: none;
+    border-bottom: 1px solid #c0c0c0;
+    margin: 0 1em;
+}
+
+
+

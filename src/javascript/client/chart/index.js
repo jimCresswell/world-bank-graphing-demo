@@ -4,6 +4,8 @@
  */
 'use strict';
 
+var assign = require('lodash.assign');
+
 var chartPrototypes = require('./chart-types');
 
 module.exports = Chart;
@@ -19,10 +21,13 @@ module.exports = Chart;
 function Chart(chartOptions, data) {
     var chart = this;
 
+    // Hint at expected chart properties.
     chart.id = '';
     chart.dimensions = {};
-    chart.svg = null;
     chart.data = false;
+    chart.svg = null;
+    chart.d3svg = null;
+
 
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
@@ -47,9 +52,15 @@ function Chart(chartOptions, data) {
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
-    Chart.prototype = chartPrototypes[chartOptions.chartType].extend(Chart.prototype);
+    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
+
+    // Make some initial assignments.
+    chart.init();
 }
 
+Chart.prototype.init = function() {
+    console.warn('Chart.init has not been overriden with a chart type specific method.');
+};
 
 Chart.prototype.update = function() {
     console.warn('Chart.update has not been overriden with a chart type specific method.');

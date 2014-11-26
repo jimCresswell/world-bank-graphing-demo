@@ -12,7 +12,7 @@ var dataService = require('./dataService');
 var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
 var controlOptions = {id: 'indices-control'};
 var chartOptions = {
-    id: 'chart1--svg',
+    id: 'chart1-svg',
     chartType: 'worldBankIndices'
 };
 

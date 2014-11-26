@@ -4,8 +4,6 @@
  */
 'use strict';
 
-var assign = require('lodash.assign');
-
 var chartPrototypes = require('./chart-types');
 
 module.exports = Chart;
@@ -49,8 +47,7 @@ function Chart(chartOptions, data) {
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
-    // Oooohhhh, JavaSCript.
-    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
+    Chart.prototype = chartPrototypes[chartOptions.chartType].extend(Chart.prototype);
 }
 
 

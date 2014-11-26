@@ -11,7 +11,7 @@
     width: 300px;
     height: 200px;
     margin: 1em auto;
-    background-color: red;
+    border: 1px solid #c0c0c0;
 }
 
 @media (min-width: 480px) {
@@ -40,4 +40,9 @@
         width: 750px;
         height: 500px;
     }
+}
+
+.chart-container > svg circle,
+.chart-container > svg rect {
+    fill: red;
 }

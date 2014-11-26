@@ -15,10 +15,6 @@ function Controls(controlsOptions, data) {
         return new Controls(controlsOptions, data);
     }
 
-    if (!controlsOptions.id) {
-        throw new TypeError('Please supply an id for the chart controls.');
-    }
-
     if (!data) {
         throw new TypeError('Please suppply data for the controls.');
     }

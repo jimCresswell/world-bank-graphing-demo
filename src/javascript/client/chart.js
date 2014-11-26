@@ -4,8 +4,6 @@
  */
 'use strict';
 
-var throttle = require('lodash.throttle');
-
 module.exports = Chart;
 
 /**
@@ -28,12 +26,8 @@ function Chart(chartOptions, data) {
         return new Chart(chartOptions, data);
     }
 
-    if (!chartOptions.id) {
-        throw new TypeError('Please supply a chart id.');
-    }
-
     chart.id = chartOptions.id;
-    chart.svg = document.getElementById(chartOptions.id);
+    chart.svg = chartOptions.svg;
 
     if (chart.svg.tagName !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
@@ -47,12 +41,18 @@ function Chart(chartOptions, data) {
 
     chart.data = data;
 
-    chart.addResizeListener();
-
     // TODO instantiate an event delegate.
     // TODO add chart type specific event listeners, pass in an event delegate to add them to.
     // TODO override the draw method with the chart type specific method.
 }
+
+
+Chart.prototype.update = function() {
+    // TODO Re-slice and bind data according to accessors
+    // possibly from passed in parameters here.
+
+    this.draw();
+};
 
 
 Chart.prototype.draw = function() {
@@ -103,12 +103,4 @@ Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
         this.draw();
     }
-};
-
-
-Chart.prototype.addResizeListener = function() {
-    var throttleLimit = 100; // Milliseconds.
-
-    // Call onResize at most once every throttleLimit milliseconds.
-    window.addEventListener('resize', throttle(this.onResize.bind(this), throttleLimit, {trailing: true}));
 };

@@ -8,15 +8,23 @@ var d3 = require('d3');
 var cssClass = 'chart--world-bank-indices';
 
 exports.init = function() {
+    var d3Objects = this.d3Objects;
+    var d3Svg = d3Objects.svg = d3.select(this.svg);
+
     this.cssClass = cssClass;
-    this.d3svg = d3.select(this.svg);
-    this.d3svg.classed(cssClass, true);
+    d3Svg.classed(cssClass, true);
+
+    d3Objects.xAxis = d3Svg.append('g').classed('axis x-axis', true);
+    d3Objects.yAxis = d3Svg.append('g').classed('axis y-axis', true);
+    d3Objects.legend = d3Svg.append('g').classed('legend', true);
+    d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
 };
 
 
+
 exports.update = function() {
-    // TODO Re-slice and bind data according to accessors
-    // possibly from passed in parameters here.
+    // TODO: calculate scales.
+
     this.draw();
 };
 
@@ -25,7 +33,8 @@ exports.draw = function() {
     // DEBUG
     console.log('drawing...');
 
-    this.d3svg
+    var chartArea = this.d3Objects.chartArea;
+    chartArea
         .selectAll('cirlce')
         .data([10,20,30,40,50])
         .enter().append('circle')

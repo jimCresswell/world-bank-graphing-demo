@@ -26,7 +26,7 @@ function Chart(chartOptions, data) {
     chart.dimensions = {};
     chart.data = false;
     chart.svg = null;
-    chart.d3svg = null;
+    chart.d3Objects = {};
 
 
     // Cope with lack of 'new' keyword.

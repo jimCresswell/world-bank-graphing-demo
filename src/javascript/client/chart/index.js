@@ -4,7 +4,12 @@
  */
 'use strict';
 
+var assign = require('lodash.assign');
+
+var chartPrototypes = require('./chart-types');
+
 module.exports = Chart;
+
 
 /**
  * Creates a new chart.
@@ -41,22 +46,20 @@ function Chart(chartOptions, data) {
 
     chart.data = data;
 
-    // TODO instantiate an event delegate.
-    // TODO add chart type specific event listeners, pass in an event delegate to add them to.
-    // TODO override the draw method with the chart type specific method.
+    // Turn this into the appropriate type of Chart object.
+    // Methods in the chart type will override default
+    // Chart object prototype methods.
+    // Oooohhhh, JavaSCript.
+    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 }
 
 
 Chart.prototype.update = function() {
-    // TODO Re-slice and bind data according to accessors
-    // possibly from passed in parameters here.
-
-    this.draw();
+    console.warn('Chart.update has not been overriden with a chart type specific method.');
 };
 
 
 Chart.prototype.draw = function() {
-    // TODO draw the chart with d3.
     console.warn('Chart.draw has not been overriden with a chart type specific method.');
 };
 

@@ -11,7 +11,11 @@ var dataService = require('./dataService');
 
 var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
 var controlOptions = {id: 'indices-control'};
-var chartOptions = {id: 'chart1--svg'};
+var chartOptions = {
+    id: 'chart1--svg',
+    chartType: 'worldBankIndices'
+};
+
 
 /**
  * Kick everything off!
@@ -39,6 +43,8 @@ function init(data) {
 
     chartOptions.svg = document.getElementById(chartOptions.id);
     controlOptions.form = document.getElementById(controlOptions.id);
+
+    // TODO instantiate a DOM event delegate for the chart.
 
     chart = new Chart(chartOptions, data);
     controls = new Controls(controlOptions, data);

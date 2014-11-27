@@ -24,7 +24,10 @@ function Chart(chartOptions, data) {
     // Chart object properties.
     chart.id = chartOptions.id;
     chart.svg = chartOptions.svg;
+    chart.defaultAccessors = chartOptions.defaultAccessors;
+    chart.accessors = {};
     chart.dimensions = {};
+    chart.scales = {};
     chart.data = {};
     chart.d3Objects = {};
 
@@ -55,7 +58,13 @@ function Chart(chartOptions, data) {
     chart.init();
 
     // Add the data
-    chart.addData(data);
+    chart.addRawData(data);
+
+    chart.setAccessors();
+
+    chart.deriveCurrentData();
+
+    chart.calculateScales();
 }
 
 
@@ -74,8 +83,23 @@ Chart.prototype.draw = function() {
 };
 
 
-Chart.prototype.addData = function() {
-    console.warn('Chart.addData has not been overriden with a chart type specific method.');
+Chart.prototype.addRawData = function() {
+    console.warn('Chart.addRawData has not been overriden with a chart type specific method.');
+};
+
+
+Chart.prototype.deriveCurrentData = function() {
+    console.warn('Chart.deriveCurrentData has not been overriden with a chart type specific method.');
+};
+
+
+Chart.prototype.setAccessors = function() {
+    console.warn('Chart.setAccessors has not been overriden with a chart type specific method.');
+};
+
+
+Chart.prototype.calculateScales = function() {
+    console.warn('Chart.calculateScales has not been overriden with a chart type specific method.');
 };
 
 

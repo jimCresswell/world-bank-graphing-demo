@@ -13,7 +13,12 @@ var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
 var controlOptions = {id: 'indices-control'};
 var chartOptions = {
     id: 'chart1-svg',
-    chartType: 'worldBankIndices'
+    chartType: 'worldBankIndices',
+    defaultAccessors: {
+        x: 'Population, total',
+        y: 'Foreign direct investment, net (BoP, current US$)',
+        z: 'Internet users (per 100 people)'
+    }
 };
 
 
@@ -53,8 +58,8 @@ function init(data) {
 
     addResizeListener();
 
-    // Calculate scales and draw the chart.
-    chart.update();
+    // Draw the chart.
+    chart.draw();
 
     // Call onResize at most once every throttleLimit milliseconds.
     function addResizeListener() {

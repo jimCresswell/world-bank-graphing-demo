@@ -16,9 +16,10 @@ var chartOptions = {
     chartType: 'worldBankIndices',
     defaultAccessors: {
         x: 'Population, total',
-        y: 'Foreign direct investment, net (BoP, current US$)',
+        y: 'Literacy rate, adult total (% of people ages 15 and above)',
         z: 'Internet users (per 100 people)'
-    }
+    },
+    zRange: [10, 20]
 };
 
 

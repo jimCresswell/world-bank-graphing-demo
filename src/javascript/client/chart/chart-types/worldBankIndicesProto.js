@@ -4,6 +4,8 @@
 'use strict';
 
 var d3 = require('d3');
+var _isNaN = require('lodash.isnan');
+var _compact = require('lodash.compact');
 
 var cssClass = 'chart--world-bank-indices';
 
@@ -37,9 +39,7 @@ exports.addRawData = function(rawData) {
     var indices = data.indices = Object.keys(rawData[regions[0]]);
 
     // Each index has the same years.
-    data.years = (rawData[regions[0]][indices[0]]).map(function(indexPoint) {
-        return indexPoint.year;
-    });
+    data.years = Object.keys(rawData[regions[0]][indices[0]]);
 };
 
 
@@ -69,23 +69,29 @@ exports.deriveCurrentData = function() {
         maxZ: undefined
     };
 
-    data.derived = data.regions.map(function(region) {
+    var derivedData = data.regions.map(function(region) {
         var values = {
             region: region,
-            x: data.rawData[region][chart.accessors.x][year],
-            y: data.rawData[region][chart.accessors.y][year],
-            z: data.rawData[region][chart.accessors.z][year]
+            x: parseFloat(data.rawData[region][chart.accessors.x][year]),
+            y: parseFloat(data.rawData[region][chart.accessors.y][year]),
+            z: parseFloat(data.rawData[region][chart.accessors.z][year])
         };
+
+        // If any of the values are missing then skip
+        // this region and year combination.
+        if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
+            return false;
+        }
+
 
         // Find the extremes over all data.
         ['min', 'max'].forEach(function(extreme) {
             ['X', 'Y', 'Z'].forEach(function(dimension) {
-                var extremeValue = extremes[extreme+dimension];
                 var currentValue = values[dimension.toLowerCase()];
-                if (extremeValue === undefined) {
-                    extremeValue = currentValue;
+                if (extremes[extreme+dimension] === undefined) {
+                    extremes[extreme+dimension] = currentValue;
                 } else {
-                    extremeValue = Math[extreme](extremeValue, currentValue);
+                    extremes[extreme+dimension] = Math[extreme](extremes[extreme+dimension], currentValue);
                 }
             });
         });
@@ -93,7 +99,11 @@ exports.deriveCurrentData = function() {
         return values;
     });
 
-    this.data.extremes = extremes;
+    // Record the derived data with falsey values removed.
+    data.derived = _compact(derivedData);
+
+    // Record the extreme data values.
+    data.extremes = extremes;
 };
 
 
@@ -118,22 +128,39 @@ exports.draw = function() {
     // DEBUG
     console.log('drawing...');
 
+    var chart = this;
+    var textOffset = 10;
+
     // TODO loop over the years.
 
     var chartArea = this.d3Objects.chartArea;
-    chartArea
-        .selectAll('cirlce')
+    var dataPoints = chartArea
+        .selectAll('circle')
         .data(this.data.derived)
-        .enter().append('circle')
+        .enter().append('g')
             .attr({
-                cx: function(d) {return this.scales.x(d.x);},
-                cy: function(d) {return this.scales.x(d.y);},
-                r: function(d) {return this.scales.x(d.z);}
+                transform: function(d) {
+                    return 'translate(' +
+                        chart.scales.x(d.x) +
+                        ',' +
+                         chart.scales.y(d.y) +
+                        ')';
+                }
             });
 
-debugger;
+        dataPoints.append('circle')
+            .attr({
+                r: function(d) {return chart.scales.z(d.z);}
+            });
 
-            // TODO: set the colour according to region.
+        // TODO: set the cirlce colour according to region.
+
+        dataPoints.append('text')
+            .text(function (d) {return d.region;})
+            .attr({
+                x: function(d) {return chart.scales.z(d.z) + textOffset;},
+                y: 0
+            });
 };
 
 

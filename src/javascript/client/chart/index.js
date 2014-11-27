@@ -25,6 +25,7 @@ function Chart(chartOptions, data) {
     chart.id = chartOptions.id;
     chart.svg = chartOptions.svg;
     chart.defaultAccessors = chartOptions.defaultAccessors;
+    chart.zRange = chartOptions.zRange || false;
     chart.accessors = {};
     chart.dimensions = {};
     chart.scales = {};

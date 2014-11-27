@@ -41,6 +41,8 @@
     "superagent": "~0.21.0",
     "lodash.throttle": "~2.4.1",
     "lodash.assign": "~2.4.1",
-    "d3": "~3.4.13"
+    "d3": "~3.4.13",
+    "lodash.isnan": "~2.4.1",
+    "lodash.compact": "~2.4.1"
   }
 }

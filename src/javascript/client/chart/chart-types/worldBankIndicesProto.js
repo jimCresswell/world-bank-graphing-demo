@@ -12,6 +12,9 @@ var cssClass = 'chart--world-bank-indices';
 // Default Z range in pixels.
 var defaultZRange = [10, 15];
 
+// Temporary variable while using text labels on graph.
+var textOffset = 10;
+
 exports.init = function() {
     var d3Objects = this.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(this.svg);
@@ -118,24 +121,28 @@ exports.calculateScales = function() {
             .domain([extremes['min'+dimension], extremes['max'+dimension]]);
     });
 
-    scales.x.rangeRound([0,chartDimensions.width]);
-    scales.y.rangeRound([chartDimensions.height,0]);
-    scales.z.rangeRound(this.zRange || defaultZRange);
+    scales.x.range([0, chartDimensions.width]);
+    scales.y.range([chartDimensions.height, 0]);
+    scales.z.range(this.zRange || defaultZRange);
 };
 
 
+/**
+ * Draw the graph
+ * @return {undefined}
+ */
 exports.draw = function() {
     // DEBUG
     console.log('drawing...');
 
     var chart = this;
-    var textOffset = 10;
 
     // TODO loop over the years.
+    // TODO: set the cirlce colour according to region.
 
     var chartArea = this.d3Objects.chartArea;
-    var dataPoints = chartArea
-        .selectAll('circle')
+    var dataPoints = this.d3Objects.dataPoints = chartArea
+        .selectAll('g')
         .data(this.data.derived)
         .enter().append('g')
             .attr({
@@ -153,8 +160,6 @@ exports.draw = function() {
                 r: function(d) {return chart.scales.z(d.z);}
             });
 
-        // TODO: set the cirlce colour according to region.
-
         dataPoints.append('text')
             .text(function (d) {return d.region;})
             .attr({
@@ -164,9 +169,34 @@ exports.draw = function() {
 };
 
 
-exports.update = function() {
-    this.setAccessors();
-    this.deriveCurrentData();
-    this.calculateScales();
-    this.draw();
+/**
+ * Update the data point attributes according to
+ * the current chart scales.
+ * @return {undefined}
+ */
+exports.rescaleDataPoints = function() {
+    var chart = this;
+    var dataPoints = this.d3Objects.dataPoints;
+
+    dataPoints
+        .attr({
+            transform: function(d) {
+                return 'translate(' +
+                    chart.scales.x(d.x) +
+                    ',' +
+                     chart.scales.y(d.y) +
+                    ')';
+            }
+        });
+
+    dataPoints.selectAll('circles')
+        .attr({
+            r: function(d) {return chart.scales.z(d.z);}
+        });
+
+    dataPoints.selectAll('text')
+        .attr({
+            x: function(d) {return chart.scales.z(d.z) + textOffset;},
+            y: 0
+        });
 };

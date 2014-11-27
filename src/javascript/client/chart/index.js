@@ -58,7 +58,6 @@ function Chart(chartOptions, data) {
     // Do some setup.
     chart.init();
 
-    // Add the data
     chart.addRawData(data);
 
     chart.setAccessors();
@@ -71,11 +70,6 @@ function Chart(chartOptions, data) {
 
 Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
-};
-
-
-Chart.prototype.update = function() {
-    console.warn('Chart.update has not been overriden with a chart type specific method.');
 };
 
 
@@ -103,6 +97,9 @@ Chart.prototype.calculateScales = function() {
     console.warn('Chart.calculateScales has not been overriden with a chart type specific method.');
 };
 
+Chart.prototype.rescaleDataPoints = function() {
+    console.warn('Chart.rescaleDataPoints has not been overriden with a chart type specific method.');
+};
 
 Chart.prototype.getDimensionsFromDom = function() {
     var dimensions;
@@ -150,6 +147,7 @@ Chart.prototype.recordDimensions = function() {
  */
 Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
-        this.draw();
+        this.calculateScales();
+        this.rescaleDataPoints();
     }
 };

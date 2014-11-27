@@ -87,18 +87,15 @@ function reformat(dataObject) {
         var country = (output[countryName] = output[countryName] || {});
 
         // Combinations of country and indicator are
-        // unique so this is always a new array.
-        var indicator = country[indicatorName] = [];
+        // unique so this is always a new object.
+        var indicator = country[indicatorName] = {};
 
         // If the key is a year then add
         // the data to the indicators
         // array of values.
         (Object.keys(inputSet)).forEach(function(key) {
             if(key.search(/^\d\d\d\d$/) === 0) {
-                indicator.push({
-                    year: key,
-                    value: inputSet[key]
-                });
+                indicator[key] = inputSet[key];
             }
         });
     });

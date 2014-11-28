@@ -4,9 +4,9 @@ Example graphs using World Bank open data.
 
 ## Development requirements
 * Install [Node](http://nodejs.org/) and npm (comes with node).
-* Gulp installed globally with npm.
+* Install Gulp globally with npm.
   * `npm install -g gulp` 
-* jasmine-node installed globally with npm.
+* Install jasmine-node globally with npm.
   * `npm install -g jasmine-node`
 
 ## Usage

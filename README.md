@@ -3,13 +3,15 @@
 Example graphs using World Bank open data.
 
 ## Development requirements
-* Node and npm.
+* Install [Node](http://nodejs.org/) and npm (comes with node).
 * Gulp installed globally with npm.
+  * `npm install -g gulp` 
 * jasmine-node installed globally with npm.
+  * `npm install -g jasmine-node`
 
 ## Usage
 * Clone.
-* `npm install`
+* In the cloned directory, `npm install`.
 
 To watch for changes, lint, test, build and serve.
 * `gulp`

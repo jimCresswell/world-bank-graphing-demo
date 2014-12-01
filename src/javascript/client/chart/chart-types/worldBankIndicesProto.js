@@ -173,42 +173,9 @@ exports.draw = function() {
 
     var chart = this;
 
-    // PROTOTYPE AXES
-    // Draw axes
-    chart.axesFactories = {x:null, y:null};
-    var xAxisFactory = chart.axesFactories.x = d3.svg.axis();
-    var yAxisFactory = chart.axesFactories.y = d3.svg.axis();
-
-    xAxisFactory.scale(chart.scales.x);
-    xAxisFactory.tickFormat(d3.format('s'));
-
-    yAxisFactory.scale(chart.scales.y);
-    yAxisFactory.tickFormat(function(d) { return d + '%';});
-    yAxisFactory.orient('left');
-
-    // Append the axes.
-    chart.d3Objects.axes.x.call(xAxisFactory);
-    chart.d3Objects.axes.y.call(yAxisFactory);
-
-    // Add axes labels.
-    var xLabel = chart.d3Objects.axes.x
-        .append('g')
-        .classed('xAxis__label', true);
-    xLabel.attr({transform: 'translate(' + chart.dimensions.height/2 + ',' + 40 + ')'});
-    xLabel
-        .append('text')
-        .text(chart.accessors.x);
-
-    var yLabel = chart.d3Objects.axes.y
-        .append('g')
-        .classed('yAxis__label', true);
-    yLabel.style('text-anchor', 'middle');
-    yLabel.attr({transform: 'translate(-40, ' + chart.dimensions.height/2 + ')'});
-    yLabel
-        .append('text')
-        .attr({transform: 'rotate(-90)'})
-        .text(chart.accessors.y);
-
+    chart.drawAxes();
+    chart.labelAxes();
+    chart.positionAxesLabels();
 
     var chartArea = this.d3Objects.chartArea;
     var dataPoints = this.d3Objects.dataPoints = chartArea
@@ -236,6 +203,58 @@ exports.draw = function() {
                 x: function(d) {return chart.scales.z(d.z) + textOffset;},
                 y: 0
             });
+};
+
+
+exports.drawAxes = function() {
+    var chart = this;
+    var xAxisFactory = d3.svg.axis();
+    var yAxisFactory = d3.svg.axis();
+
+    xAxisFactory.scale(chart.scales.x);
+    xAxisFactory.tickFormat(d3.format('s'));
+
+    yAxisFactory.scale(chart.scales.y);
+    yAxisFactory.tickFormat(function(d) { return d + '%';});
+    yAxisFactory.orient('left');
+
+    // Append the axes.
+    chart.d3Objects.axes.x.call(xAxisFactory);
+    chart.d3Objects.axes.y.call(yAxisFactory);
+};
+
+
+exports.labelAxes = function() {
+    var chart = this;
+
+    var xLabel = chart.d3Objects.axes.x
+        .append('g')
+        .classed('label xAxis__label', true);
+
+    xLabel
+        .append('text')
+        .text(chart.accessors.x);
+
+    var yLabel = chart.d3Objects.axes.y
+        .append('g')
+        .classed('label yAxis__label', true);
+    yLabel.style('text-anchor', 'middle');
+
+    yLabel
+        .append('text')
+        .attr({transform: 'rotate(-90)'})
+        .text(chart.accessors.y);
+};
+
+
+exports.positionAxesLabels = function() {
+    var chart = this;
+
+    chart.d3Objects.axes.x.select('.label')
+        .attr({transform: 'translate(' + chart.dimensions.height/2 + ',' + 40 + ')'});
+
+    chart.d3Objects.axes.y.select('.label')
+        .attr({transform: 'translate(-40, ' + chart.dimensions.height/2 + ')'});
 };
 
 

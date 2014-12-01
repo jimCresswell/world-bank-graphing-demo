@@ -156,6 +156,8 @@ Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
         this.positionElements();
         this.calculateScales();
+        this.drawAxes();
+        this.positionAxesLabels();
         this.rescaleDataPoints();
     }
 };

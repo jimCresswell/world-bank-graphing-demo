@@ -12,34 +12,34 @@
     border: 1px solid #c0c0c0;
 }
 
-.chart-container > svg {
+.chart-container .chart {
     width: 300px;
     height: 200px;
 }
 
 @media (min-width: 480px) {
-    .chart-container > svg {
+    .chart-container .chart {
         width: 400px;
         height: 267px;
     }
 }
 
 @media (min-width: 600px) {
-    .chart-container > svg {
+    .chart-container .chart {
         width: 500px;
         height: 333px;
     }
 }
 
 @media (min-width: 800px) {
-    .chart-container > svg {
+    .chart-container .chart {
         width: 600px;
         height: 400px;
     }
 }
 
 @media (min-width: 1280px) {
-    .chart-container > svg {
+    .chart-container .chart {
         width: 750px;
         height: 500px;
     }
@@ -47,7 +47,7 @@
 
 
 .chart-container > form,
-.chart-container > svg {
+.chart-container > figure {
     padding: 1em;
 }
 
@@ -61,5 +61,16 @@
     margin: 0 1em;
 }
 
+.axis {
+    font-size: 0.8em;
+}
+
+.axis > path,
+.axis line {
+    fill: none;
+    stroke: black;
+    stroke-width: 1px;
+    shape-rendering: crispEdges;
+}
 
 

@@ -50,13 +50,16 @@ function Chart(chartOptions, data) {
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
+
+    // Do some setup.
+    chart.init();
+
     // Record the initial dimensions of the chart
     // so that scales can be caculated and calls
     // to chart.onResize will work the first time.
     chart.recordDimensions();
 
-    // Do some setup.
-    chart.init();
+    chart.positionElements();
 
     chart.addRawData(data);
 
@@ -72,6 +75,9 @@ Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
 };
 
+Chart.prototype.positionElements = function() {
+    console.warn('Chart.positionElements has not been overriden with a chart type specific method.');
+};
 
 Chart.prototype.draw = function() {
     console.warn('Chart.draw has not been overriden with a chart type specific method.');
@@ -130,11 +136,13 @@ Chart.prototype.getDimensionsFromDom = function() {
  * @return {boolean} true if the dimensions changed, false otherwise.
  */
 Chart.prototype.recordDimensions = function() {
-    var oldDimensions = this.dimensions;
-    var newDimensions = this.getDimensionsFromDom();
+    var chart = this;
+    var padding = chart.padding;
+    var currentRecordedDimensions = chart.dimensions;
+    var newDimensions = chart.getDimensionsFromDom();
 
-    if (newDimensions.width !== oldDimensions.width || newDimensions.height !== oldDimensions.height) {
-        this.dimensions = newDimensions;
+    if (newDimensions.width !== currentRecordedDimensions.width || newDimensions.height !== currentRecordedDimensions.height) {
+        chart.dimensions = newDimensions;
         return true;
     }
     return false;
@@ -147,6 +155,7 @@ Chart.prototype.recordDimensions = function() {
  */
 Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
+        this.positionElements();
         this.calculateScales();
         this.rescaleDataPoints();
     }

@@ -12,8 +12,8 @@ var cssClass = 'chart--world-bank-indices';
 // Default Z range in pixels.
 var defaultZRange = [10, 15];
 
-// Temporary variable while using text labels on graph.
-var textOffset = 10;
+// Tooltip config.
+var tooltipXoffset = 25;
 
 
 exports.init = function() {
@@ -197,12 +197,31 @@ exports.draw = function() {
                 r: function(d) {return chart.scales.z(d.z);}
             });
 
-        dataPoints.append('text')
-            .text(function (d) {return d3.format('0.2s')(d.x) + ', ' + d3.format(',.0f')(d.y) + '%, ' + d.region;})
-            .attr({
-                x: function(d) {return chart.scales.z(d.z) + textOffset;},
-                y: 0
-            });
+        // Tooltips
+        dataPoints.on('mouseover', function() {
+            var tooltip = d3.select(this).append('g');
+            tooltip
+                .classed('tooltip', true)
+                .attr({
+                    transform: 'translate(' + tooltipXoffset + ', 0)'
+                });
+
+            tooltip.append('text')
+                .text(function(d) {return d.region;});
+            tooltip.append('text')
+                 .text(function(d) {return chart.accessors.x.substring(0,16) + ': ' + d.x;})
+                 .attr({x: 10, y: 20});
+            tooltip.append('text')
+                 .text(function(d) {return chart.accessors.y.substring(0,16) + ': ' + d.y;})
+                 .attr({x: 10, y: 40});
+            tooltip.append('text')
+                 .text(function(d) {return chart.accessors.z.substring(0,16) + ': ' + d.z;})
+                 .attr({x: 10, y: 60});
+        });
+        dataPoints.on('mouseout', function() {
+            var tooltip = d3.select(this).select('.tooltip');
+            tooltip.remove();
+        });
 };
 
 

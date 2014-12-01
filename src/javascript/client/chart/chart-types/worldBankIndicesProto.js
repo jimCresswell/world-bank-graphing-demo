@@ -180,10 +180,10 @@ exports.draw = function() {
     var yAxisFactory = chart.axesFactories.y = d3.svg.axis();
 
     xAxisFactory.scale(chart.scales.x);
-    xAxisFactory.tickFormat(d3.format("s"));
+    xAxisFactory.tickFormat(d3.format('s'));
 
     yAxisFactory.scale(chart.scales.y);
-    yAxisFactory.tickFormat(function(d) { return d + '%'});
+    yAxisFactory.tickFormat(function(d) { return d + '%';});
     yAxisFactory.orient('left');
 
     // Append the axes.
@@ -202,7 +202,7 @@ exports.draw = function() {
     var yLabel = chart.d3Objects.axes.y
         .append('g')
         .classed('yAxis__label', true);
-    yLabel.style("text-anchor", "middle");
+    yLabel.style('text-anchor', 'middle');
     yLabel.attr({transform: 'translate(-40, ' + chart.dimensions.height/2 + ')'});
     yLabel
         .append('text')

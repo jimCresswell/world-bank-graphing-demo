@@ -137,7 +137,6 @@ Chart.prototype.getDimensionsFromDom = function() {
  */
 Chart.prototype.recordDimensions = function() {
     var chart = this;
-    var padding = chart.padding;
     var currentRecordedDimensions = chart.dimensions;
     var newDimensions = chart.getDimensionsFromDom();
 

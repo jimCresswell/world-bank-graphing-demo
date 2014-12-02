@@ -38,10 +38,10 @@ exports.init = function() {
 
     // Chart area SVG padding in pixels.
     chart.padding = {
-        top: 20,
+        top: 25,
         right: 20,
         bottom: 50,
-        yAxis: 50
+        yAxis: 60
     };
     chart.padding.left = chart.padding.yAxis + 20;
 };
@@ -276,11 +276,9 @@ exports.labelAxes = function() {
     var yLabel = chart.d3Objects.axes.y
         .append('g')
         .classed('label yAxis__label', true);
-    yLabel.style('text-anchor', 'middle');
 
     yLabel
         .append('text')
-        .attr({transform: 'rotate(-90)'})
         .text(chart.accessors.y);
 };
 
@@ -288,11 +286,15 @@ exports.labelAxes = function() {
 exports.positionAxesLabels = function() {
     var chart = this;
 
+    // Calculated values are dynamic centering of labels, hardcoded values are spacing away from axes.
     chart.d3Objects.axes.x.select('.label')
-        .attr({transform: 'translate(' + chart.dimensions.height/2 + ',' + 40 + ')'});
+        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 40)'})
+        .style({'text-anchor': 'middle'});
 
+    // The rotation means the first coordinate in the translate is effectively y, second x.
     chart.d3Objects.axes.y.select('.label')
-        .attr({transform: 'translate(-40, ' + chart.dimensions.height/2 + ')'});
+        .attr({transform: 'rotate(-90) translate(' + -(chart.dimensions.height-chart.padding.top-chart.padding.bottom)/2 + ', -50)'})
+        .style({'text-anchor': 'middle'});
 };
 
 

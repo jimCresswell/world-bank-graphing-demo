@@ -209,39 +209,17 @@ exports.draw = function() {
                 }
             });
 
-        dataPoints.append('circle')
-            .attr({
-                r: function(d) { return chart.scales.z(d.z); }
-            })
-            .style({
-                fill: function(d) {return chart.scales.regionColour(d.region); },
-                stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
-            });
+    // Add tooltip behaviour
+    chart.enableTooltips();
 
-        // Tooltips
-        dataPoints.on('mouseover', function() {
-            var tooltip = d3.select(this).append('g');
-            tooltip
-                .classed('tooltip', true)
-                .attr({
-                    transform: 'translate(' + tooltipXoffset + ', 0)'
-                });
-
-            tooltip.append('text')
-                .text(function(d) {return d.region;});
-            tooltip.append('text')
-                 .text(function(d) {return chart.accessors.x.substring(0,16) + ': ' + d.x;})
-                 .attr({x: 10, y: 20});
-            tooltip.append('text')
-                 .text(function(d) {return chart.accessors.y.substring(0,16) + ': ' + d.y;})
-                 .attr({x: 10, y: 40});
-            tooltip.append('text')
-                 .text(function(d) {return chart.accessors.z.substring(0,16) + ': ' + d.z;})
-                 .attr({x: 10, y: 60});
-        });
-        dataPoints.on('mouseout', function() {
-            var tooltip = d3.select(this).select('.tooltip');
-            tooltip.remove();
+    // Add circles to the datapoints.
+    dataPoints.append('circle')
+        .attr({
+            r: function(d) { return chart.scales.z(d.z); }
+        })
+        .style({
+            fill: function(d) {return chart.scales.regionColour(d.region); },
+            stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
         });
 };
 
@@ -297,6 +275,39 @@ exports.positionAxesLabels = function() {
     chart.d3Objects.axes.y.select('.label')
         .attr({transform: 'rotate(-90) translate(' + -(chart.dimensions.height-chart.padding.top-chart.padding.bottom)/2 + ', -50)'})
         .style({'text-anchor': 'middle'});
+};
+
+
+// Enable datapoint tooltips on mouseover.
+exports.enableTooltips = function() {
+    var chart = this;
+    var dataPoints = chart.d3Objects.dataPoints;
+
+    dataPoints.on('mouseover', function() {
+        var tooltip = d3.select(this).append('g');
+        tooltip
+            .classed('tooltip', true)
+            .attr({
+                transform: 'translate(' + tooltipXoffset + ', 0)'
+            });
+
+        tooltip.append('text')
+            .text(function(d) {return d.region;});
+        tooltip.append('text')
+             .text(function(d) {return chart.accessors.x.substring(0,16) + ': ' + d.x;})
+             .attr({x: 10, y: 20});
+        tooltip.append('text')
+             .text(function(d) {return chart.accessors.y.substring(0,16) + ': ' + d.y;})
+             .attr({x: 10, y: 40});
+        tooltip.append('text')
+             .text(function(d) {return chart.accessors.z.substring(0,16) + ': ' + d.z;})
+             .attr({x: 10, y: 60});
+    });
+
+    dataPoints.on('mouseout', function() {
+        var tooltip = d3.select(this).select('.tooltip');
+        tooltip.remove();
+    });
 };
 
 

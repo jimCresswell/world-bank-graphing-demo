@@ -249,8 +249,11 @@ exports.draw = function() {
                 }
             });
 
-    // Add tooltip behaviour
-    chart.enableTooltips();
+    // Add interaction behaviour
+    // The D3 event API only allows
+    // one event of each type to be
+    // added to an element.
+    chart.enableDatapointInteractions();
 
     // Add circles to the datapoints.
     dataPoints.append('circle')
@@ -330,36 +333,20 @@ exports.positionAxesLabels = function() {
 };
 
 
-// Enable datapoint tooltips on mouseover.
-exports.enableTooltips = function() {
+exports.enableDatapointInteractions = function() {
     var chart = this;
     var dataPoints = chart.d3Objects.dataPoints;
 
     dataPoints.on('mouseover', function() {
-        var tooltip = d3.select(this).append('g');
-        tooltip
-            .classed('tooltip', true)
-            .attr({
-                transform: 'translate(' + tooltipXoffset + ', 0)'
-            });
+        var node = this;
+        chart.appendTooltip(node);
 
-        // Append the region.
-        tooltip.append('text')
-            .text(function(d) {return d.region;});
-
-        // Append the idices descriptors and values
-        // with a horizontal and vertical offset.
-        ['x','y','z'].forEach(function(dimension, i) {
-            var indexObject = chart.data.indices[chart.accessors[dimension]];
-            var descriptor = indexObject.descriptor;
-            var formatter = formatValuesFactory(indexObject.symbol);
-            tooltip.append('text')
-                 .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
-                 .attr({
-                    x: 10,
-                    y: 20*(i+1)
-                });
-        });
+        // When a datapoint is interacted with
+        // bring it to the top of the drawing
+        // stack.
+        var parent = this.parentNode;
+        parent.removeChild(this);
+        parent.appendChild(this);
     });
 
     dataPoints.on('mouseout', function() {
@@ -394,6 +381,36 @@ exports.rescaleDataPoints = function() {
             r: function(d) {return chart.scales.z(d.z);}
         });
 };
+
+
+// Given a node append a tooltip to it.
+exports.appendTooltip = function(node) {
+    var chart = this;
+    var tooltip = d3.select(node).append('g');
+    tooltip
+        .classed('tooltip', true)
+        .attr({
+           transform: 'translate(' + tooltipXoffset + ', 0)'
+        });
+
+    // Append the region.
+    tooltip.append('text')
+        .text(function(d) {return d.region;});
+
+    // Append the indices descriptors and values
+    // with a horizontal and vertical offset.
+    ['x','y','z'].forEach(function(dimension, i) {
+        var indexObject = chart.data.indices[chart.accessors[dimension]];
+        var descriptor = indexObject.descriptor;
+        var formatter = formatValuesFactory(indexObject.symbol);
+        tooltip.append('text')
+            .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
+            .attr({
+               x: 10,
+               y: 20*(i+1)
+            });
+    });
+}
 
 
 /**

@@ -380,7 +380,18 @@ exports.rescaleDataPoints = function() {
 };
 
 
-// Given a node append a tooltip to it.
+/**
+ * Given a node append a tooltip to it.
+ *
+ * Note: can't append node after setting content
+ * because the content relies on the inherited
+ * data from the parent node and because the
+ * getBoundingClientRect method requires
+ * the element to be in the DOM.
+ *
+ * @param  {DOMNode} node
+ * @return {undefined}
+ */
 exports.appendTooltip = function(node) {
     var chart = this;
     var datapoint = d3.select(node);

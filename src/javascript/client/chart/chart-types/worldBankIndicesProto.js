@@ -16,9 +16,9 @@ var defaultZRange = [10, 15];
 var tooltipXoffset = 25;
 
 // Colours per region.
-// 9 Colours, divergent, colour-blind safe.
+// 9 Colours, contrasting.
 // From http://colorbrewer2.org/
-var coloursRange = ['rgb(215,48,39)','rgb(244,109,67)','rgb(253,174,97)','rgb(254,224,144)','rgb(255,255,191)','rgb(224,243,248)','rgb(171,217,233)','rgb(116,173,209)','rgb(69,117,180)'];
+var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
 
 
 exports.init = function() {

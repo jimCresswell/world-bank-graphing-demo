@@ -96,6 +96,7 @@ exports.setAccessors = function(accessors) {
 };
 
 
+// TODO: move to model or viewmodel.
 exports.deriveCurrentData = function() {
     var chart = this;
     var data = this.data;

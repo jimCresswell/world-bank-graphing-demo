@@ -75,11 +75,38 @@ exports.addRawData = function(rawData) {
     // Get the geographical regions.
     var regions = data.regions = Object.keys(rawData);
 
-    // Each region has the same development indices.
-    var indices = data.indices = Object.keys(rawData[regions[0]]);
+    // Each region has the same development indices
+    // so no need to loop over regions.
+    var indexKeys = Object.keys(rawData[regions[0]]);
 
-    // Each index has the same years.
-    data.years = Object.keys(rawData[regions[0]][indices[0]]);
+    // Extract information about each index;
+    data.indices = {};
+    indexKeys.forEach(function (indexName) {
+        var descriptor, unit, symbol, matches = [];
+
+        // GDP growth (annual %)
+        // Population, total
+        matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
+        descriptor = matches[1];
+        unit = matches[2] || false;
+
+        // Unit can be undefined.
+        // Unit does not have to contain a symbol.
+        if (unit) {
+            matches = unit.match(/[\%\$\£]/);
+            symbol = matches ? matches[0] : false;
+        }
+
+        data.indices[indexName] = {
+            descriptor: descriptor,
+            unit: unit,
+            symbol: symbol
+        };
+    });
+
+    // Each index has the same years
+    // so no need to loop.
+    data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
 };
 
 
@@ -226,40 +253,74 @@ exports.draw = function() {
 
 exports.drawAxes = function() {
     var chart = this;
+    var indices = chart.data.indices;
     var xAxisFactory = d3.svg.axis();
     var yAxisFactory = d3.svg.axis();
+    var xSymbol = indices[chart.accessors.x].symbol;
+    var ySymbol = indices[chart.accessors.y].symbol;
 
     xAxisFactory.scale(chart.scales.x);
-    xAxisFactory.tickFormat(d3.format('s'));
+    xAxisFactory.tickFormat(formatTicks(xSymbol));
 
     yAxisFactory.scale(chart.scales.y);
-    yAxisFactory.tickFormat(function(d) { return d + '%';});
+    yAxisFactory.tickFormat(formatTicks(ySymbol));
     yAxisFactory.orient('left');
 
     // Append the axes.
     chart.d3Objects.axes.x.call(xAxisFactory);
     chart.d3Objects.axes.y.call(yAxisFactory);
+
+
+    /**
+     * Given a unit symbol return a function
+     * to suitably format the values of the
+     * axis ticks.
+     * @param  {[string} symbol
+     * @return {function} string formatting function.
+     */
+    function formatTicks(symbol) {
+        return function (d) {
+            switch (symbol) {
+                case '%':
+                    return d3.format('s')(d) + symbol;
+                case '$':
+                case '£':
+                    return symbol + d3.format('s')(d);
+                default:
+                    return d3.format('s')(d);
+            }
+        };
+    }
 };
 
 
 exports.labelAxes = function() {
     var chart = this;
+    var data = chart.data;
 
     var xLabel = chart.d3Objects.axes.x
         .append('g')
         .classed('label xAxis__label', true);
 
+    var xAccessor = chart.accessors.x
     xLabel
         .append('text')
-        .text(chart.accessors.x);
+        .text(data.indices[xAccessor].descriptor);
+    xLabel
+        .append('title')
+        .text(xAccessor);
 
     var yLabel = chart.d3Objects.axes.y
         .append('g')
         .classed('label yAxis__label', true);
 
+    var yAccessor = chart.accessors.y
     yLabel
         .append('text')
-        .text(chart.accessors.y);
+        .text(data.indices[yAccessor].descriptor)
+    yLabel
+        .append('title')
+        .text(yAccessor);
 };
 
 

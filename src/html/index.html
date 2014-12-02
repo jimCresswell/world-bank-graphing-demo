@@ -29,17 +29,36 @@
       <section class="charts">
         <h2>Charts</h2>
         <article class="chart-container">
-          <form id="indices-control">
+          <form id="indices-controls">
             <fieldset form="indices-control">
               <legend>Choose indices</legend>
-              <label for="chart1-select-horizontal">horizontal</label>
-              <select name="horizontal" id="chart1-select-horizontal">
-                <option value="default">default</option>
-              </select>
-              <label for="chart1-select-vertical">vertical</label>
-              <select name="vertical" id="chart1-select-vertical">
-                <option value="default">default</option>
-              </select>
+              <div class="control-group">
+                <span class="control">
+                  <label for="chart1-select-horizontal">horizontal</label>
+                  <select name="horizontal" id="chart1-select-horizontal">
+                    <option value="default">default</option>
+                  </select>
+                </span>
+                <span class="control">
+                  <label for="chart1-select-vertical">vertical</label>
+                  <select name="vertical" id="chart1-select-vertical">
+                    <option value="default">default</option>
+                  </select>
+                </span>
+                <span class="control">
+                  <label for="chart1-select-radius">radius</label>
+                  <select name="radius" id="chart1-select-radius">
+                    <option value="default">default</option>
+                  </select>
+                </span>
+              </div>
+              <div class="control-group">
+                <span class="control">
+                  <label for="chart1-range-year">year</label>
+                  <input type="range" name="year-range" id="chart1-range-year">
+                  <input type="text" name="year-text" id="chart1-text-year">
+                </span>
+              </div>
             </fieldset>
           </form>
           <hr>

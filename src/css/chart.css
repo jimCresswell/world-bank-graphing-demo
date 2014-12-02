@@ -52,15 +52,40 @@
 .chart-container > figure {
     padding: 1em;
 }
-
-.chart-container > form legend {
-    padding-bottom: 0.5em;
+.chart-container > form {
+    padding-bottom: 2em;
 }
 
 .chart-container hr {
     border: none;
     border-bottom: 1px solid #c0c0c0;
     margin: 0 1em;
+}
+
+.chart-container fieldset > legend {
+    padding-bottom: 1.5em;
+}
+
+.chart-container fieldset > .control-group {
+    padding-bottom: 1em;
+}
+
+.chart-container fieldset > .control-group:last-child {
+    padding-bottom: 0;
+}
+
+.chart-container .control-group .control {
+    display: inline-block;
+    margin-left: 1.2em;
+    margin-bottom: 1em;
+}
+
+.chart-container .control-group .control input {
+    margin-bottom: 1em;
+}
+
+.chart-container .control-group .control label {
+    margin-right: 0.4em;
 }
 
 .axis {
@@ -74,5 +99,3 @@
     stroke-width: 1px;
     shape-rendering: crispEdges;
 }
-
-

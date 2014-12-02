@@ -322,10 +322,4 @@ exports.rescaleDataPoints = function() {
         .attr({
             r: function(d) {return chart.scales.z(d.z);}
         });
-
-    dataPoints.selectAll('text')
-        .attr({
-            x: function(d) {return chart.scales.z(d.z) + textOffset;},
-            y: 0
-        });
 };

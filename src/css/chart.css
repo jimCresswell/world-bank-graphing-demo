@@ -12,11 +12,13 @@
     border: 1px solid #c0c0c0;
 }
 
+/* Aspect ration 3:4 for very narrow viewports */
 .chart-container .chart {
     width: 300px;
-    height: 200px;
+    height: 400px;
 }
 
+/* Aspect ration 3:2 */
 @media (min-width: 480px) {
     .chart-container .chart {
         width: 400px;

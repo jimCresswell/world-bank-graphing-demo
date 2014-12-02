@@ -99,3 +99,9 @@
     stroke-width: 1px;
     shape-rendering: crispEdges;
 }
+
+
+/* tooltips */
+.tooltip {
+    point-events: none;
+}

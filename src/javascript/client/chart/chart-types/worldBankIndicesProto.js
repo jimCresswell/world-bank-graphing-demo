@@ -15,6 +15,11 @@ var defaultZRange = [10, 15];
 // Tooltip config.
 var tooltipXoffset = 25;
 
+// Colours per region.
+// 9 Colours, divergent, colour-blind safe.
+// From http://colorbrewer2.org/
+var coloursRange = ['rgb(215,48,39)','rgb(244,109,67)','rgb(253,174,97)','rgb(254,224,144)','rgb(255,255,191)','rgb(224,243,248)','rgb(171,217,233)','rgb(116,173,209)','rgb(69,117,180)'];
+
 
 exports.init = function() {
     var chart = this;
@@ -148,6 +153,9 @@ exports.calculateScales = function() {
     var chartDimensions = this.dimensions;
     var padding = this.padding;
 
+    // Linear scales the three data accessors
+    // where the Z accessor is mapped to the
+    // radius of the datapoint.
     ['X', 'Y', 'Z'].forEach(function(dimension) {
         scales[dimension.toLowerCase()] = d3.scale
             .linear()
@@ -156,6 +164,13 @@ exports.calculateScales = function() {
                 extremes['max'+dimension]
             ]);
     });
+
+    // Ordinal scale mapping region name to a colour
+    // from a range generated with
+    // http://colorbrewer2.org/
+    scales.regionColour = d3.scale.ordinal()
+        .domain(this.data.regions)
+        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
 
     scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
@@ -194,7 +209,11 @@ exports.draw = function() {
 
         dataPoints.append('circle')
             .attr({
-                r: function(d) {return chart.scales.z(d.z);}
+                r: function(d) { return chart.scales.z(d.z); }
+            })
+            .style({
+                fill: function(d) {return chart.scales.regionColour(d.region); },
+                stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
             });
 
         // Tooltips

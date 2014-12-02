@@ -163,7 +163,8 @@ exports.calculateScales = function() {
             .domain([
                 extremes['min'+dimension] * 0.95,
                 extremes['max'+dimension]
-            ]);
+            ])
+            .nice();
     });
 
     // Ordinal scale mapping region name to a colour

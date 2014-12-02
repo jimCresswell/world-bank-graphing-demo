@@ -66,6 +66,7 @@ exports.positionElements = function () {
 };
 
 
+// TODO: move to model or viewmodel.
 exports.addRawData = function(rawData) {
     var data = this.data = {};
 
@@ -84,17 +85,28 @@ exports.addRawData = function(rawData) {
     indexKeys.forEach(function (indexName) {
         var descriptor, unit, symbol, matches = [];
 
-        // GDP growth (annual %)
-        // Population, total
+        // Some percentages are have a unit
+        // of 'per 100 <something>'.
+        var altPercentageString = 'per 100';
+
+        // descriptor [(unit)]
+        // e.g. GDP growth (annual %)
+        // e.g. Population, total
         matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
         descriptor = matches[1];
         unit = matches[2] || false;
 
-        // Unit can be undefined.
+        // Unit can be undefined for an index.
         // Unit does not have to contain a symbol.
         if (unit) {
-            matches = unit.match(/[\%\$\£]/);
+            matches = unit.match(new RegExp('[\%\$\£]|'+altPercentageString));
             symbol = matches ? matches[0] : false;
+
+            // Cope with some values being labelled
+            // 'per 100' instead of %.
+            if (symbol === altPercentageString) {
+                symbol = '%';
+            }
         }
 
         data.indices[indexName] = {
@@ -110,6 +122,7 @@ exports.addRawData = function(rawData) {
 };
 
 
+// TODO: move to model or viewmodel.
 /**
  * Set the data accessors for the chart.
  * @param {object} accessors {x:'', y:'', z:''}
@@ -260,37 +273,15 @@ exports.drawAxes = function() {
     var ySymbol = indices[chart.accessors.y].symbol;
 
     xAxisFactory.scale(chart.scales.x);
-    xAxisFactory.tickFormat(formatTicks(xSymbol));
+    xAxisFactory.tickFormat(formatValuesFactory(xSymbol));
 
     yAxisFactory.scale(chart.scales.y);
-    yAxisFactory.tickFormat(formatTicks(ySymbol));
+    yAxisFactory.tickFormat(formatValuesFactory(ySymbol));
     yAxisFactory.orient('left');
 
     // Append the axes.
     chart.d3Objects.axes.x.call(xAxisFactory);
     chart.d3Objects.axes.y.call(yAxisFactory);
-
-
-    /**
-     * Given a unit symbol return a function
-     * to suitably format the values of the
-     * axis ticks.
-     * @param  {[string} symbol
-     * @return {function} string formatting function.
-     */
-    function formatTicks(symbol) {
-        return function (d) {
-            switch (symbol) {
-                case '%':
-                    return d3.format('s')(d) + symbol;
-                case '$':
-                case '£':
-                    return symbol + d3.format('s')(d);
-                default:
-                    return d3.format('s')(d);
-            }
-        };
-    }
 };
 
 
@@ -352,17 +343,23 @@ exports.enableTooltips = function() {
                 transform: 'translate(' + tooltipXoffset + ', 0)'
             });
 
+        // Append the region.
         tooltip.append('text')
             .text(function(d) {return d.region;});
-        tooltip.append('text')
-             .text(function(d) {return chart.accessors.x.substring(0,16) + ': ' + d.x;})
-             .attr({x: 10, y: 20});
-        tooltip.append('text')
-             .text(function(d) {return chart.accessors.y.substring(0,16) + ': ' + d.y;})
-             .attr({x: 10, y: 40});
-        tooltip.append('text')
-             .text(function(d) {return chart.accessors.z.substring(0,16) + ': ' + d.z;})
-             .attr({x: 10, y: 60});
+
+        // Append the idices descriptors and values
+        // with a horizontal and vertical offset.
+        ['x','y','z'].forEach(function(dimension, i) {
+            var indexObject = chart.data.indices[chart.accessors[dimension]];
+            var descriptor = indexObject.descriptor;
+            var formatter = formatValuesFactory(indexObject.symbol);
+            tooltip.append('text')
+                 .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
+                 .attr({
+                    x: 10,
+                    y: 20*(i+1)
+                });
+        });
     });
 
     dataPoints.on('mouseout', function() {
@@ -397,3 +394,30 @@ exports.rescaleDataPoints = function() {
             r: function(d) {return chart.scales.z(d.z);}
         });
 };
+
+
+/**
+ * Helpers
+ */
+
+
+ /**
+  * Given a unit symbol return a function
+  * to suitably format the values of the
+  * axis ticks.
+  * @param  {[string} symbol
+  * @return {function} string formatting function.
+  */
+ function formatValuesFactory(symbol) {
+     return function (d) {
+         switch (symbol) {
+             case '%':
+                 return d3.format(',f')(d) + symbol;
+             case '$':
+             case '£':
+                 return symbol + d3.format(',s')(d);
+             default:
+                 return d3.format(',.2s')(d);
+         }
+     };
+ }

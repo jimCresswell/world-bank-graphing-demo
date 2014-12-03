@@ -6,6 +6,6 @@ var del = require('del');
 var config = require('../config');
 
 gulp.task('clean', function(cb) {
-    del(config.webRoot, cb);
+    del(config.serve.webRoot, cb);
 });
 

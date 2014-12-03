@@ -26,7 +26,10 @@ module.exports = {
         src: src + '/data/**/*.csv',
         dest: dest + '/data/'
     },
-    webRoot: dest,
+    serve: {
+        webRoot: dest,
+        browsers: ["google-chrome", "firefox"]
+    },
     destWatch: dest + '/**/*',
     publish: {
         src: dest + '/**/*'

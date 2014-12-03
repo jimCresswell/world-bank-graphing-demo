@@ -3,13 +3,14 @@
 var gulp = require('gulp');
 var browserSync = require('browser-sync');
 
-var config = require('../config');
+var config = require('../config').serve;
 
 gulp.task('serve', function() {
     browserSync({
         server: {
             baseDir: config.webRoot
-        }
+        },
+        browser: config.browsers
     });
 });
 

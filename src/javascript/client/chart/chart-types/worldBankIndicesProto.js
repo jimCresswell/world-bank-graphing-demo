@@ -17,6 +17,8 @@ var defaultZRange = [10, 15];
 // From http://colorbrewer2.org/
 var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
 
+// Legend config
+var legendWidth = 170;
 
 exports.init = function() {
     var chart = this;
@@ -36,7 +38,7 @@ exports.init = function() {
     // Chart area SVG padding in pixels.
     chart.padding = {
         top: 25,
-        right: 20,
+        right: legendWidth + 20,
         bottom: 50,
         yAxis: 60
     };
@@ -261,6 +263,9 @@ exports.draw = function() {
             fill: function(d) {return chart.scales.regionColour(d.region); },
             stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
         });
+
+    chart.positionLegend();
+    chart.populateLegend();
 };
 
 
@@ -350,6 +355,51 @@ exports.enableDatapointInteractions = function() {
         var tooltip = d3.select(this).select('.tooltip');
         tooltip.remove();
     });
+};
+
+
+exports.positionLegend = function() {
+    var chart = this;
+    chart.d3Objects.legend
+        .attr({
+            transform: 'translate(' + (chart.dimensions.width - legendWidth) + ', 10)'
+        })
+};
+
+exports.populateLegend = function() {
+    var chart = this;
+    var data = chart.data;
+    var legend = chart.d3Objects.legend;
+    var rHeight = 17;
+
+    var legendRegions = legend.selectAll('g')
+        .data(data.regions)
+        .enter()
+        .append('g')
+            .attr({
+                transform: function(d,i) {return 'translate(0,' + (i*20) + ')';}
+            });
+
+    legendRegions.append('rect')
+        .attr({
+            width: legendWidth,
+            height: rHeight
+        }).style({
+            fill: function(d) {return chart.scales.regionColour(d);}
+        });
+
+    legendRegions.append('text')
+        .text(function(d) {return (/[^\()]*/.exec(d))[0]})
+        .attr({
+            x: 5,
+            y: 1,
+            'text-rendering': 'optimizeLegibility'
+        })
+        .style({
+            'font-size': '0.8em',
+            'font-weight': 900,
+            'alignment-baseline': 'text-before-edge'
+        });
 };
 
 

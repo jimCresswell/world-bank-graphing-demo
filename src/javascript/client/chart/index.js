@@ -107,6 +107,18 @@ Chart.prototype.rescaleDataPoints = function() {
     console.warn('Chart.rescaleDataPoints has not been overriden with a chart type specific method.');
 };
 
+Chart.prototype.drawAxes = function() {
+    console.warn('Chart.drawAxes has not been overriden with a chart type specific method.');
+};
+
+Chart.prototype.positionAxesLabels = function() {
+    console.warn('Chart.positionAxesLabels has not been overriden with a chart type specific method.');
+};
+
+Chart.prototype.positionLegend = function() {
+    console.warn('Chart.positionLegend has not been overriden with a chart type specific method.');
+};
+
 Chart.prototype.getDimensionsFromDom = function() {
     var dimensions;
 
@@ -158,6 +170,7 @@ Chart.prototype.onResize = function() {
         this.calculateScales();
         this.drawAxes();
         this.positionAxesLabels();
+        this.positionLegend();
         this.rescaleDataPoints();
     }
 };

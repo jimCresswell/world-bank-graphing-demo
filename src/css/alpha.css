@@ -1,0 +1,27 @@
+.alpha::after {
+    content: 'ALPHA';
+    display: inline-block;
+    position: absolute;
+    font-size: 3em;
+    width: 16rem;
+    height: 3.5rem;
+    line-height: 3.5rem;
+    top: 2.3rem;
+    left: -3.8rem;
+    transform: rotate(-45deg);
+    text-align: center;
+    vertical-align: middle;
+    background-color: red;
+    color: white;
+    text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
+}
+
+.alpha:hover::after {
+    content: 'IT\'S NOT FINISHED!';
+    font-size: 1.1em;
+    font-weight: 900;
+}

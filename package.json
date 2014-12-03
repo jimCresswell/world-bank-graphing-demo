@@ -34,7 +34,8 @@
     "gulp-shell": "~0.2.10",
     "gulp-util": "~3.0.1",
     "gulp-rename": "~1.2.0",
-    "event-stream": "~3.1.7"
+    "event-stream": "~3.1.7",
+    "gulp-gh-pages": "~0.4.0"
   },
   "dependencies": {
     "q": "~1.1.2",

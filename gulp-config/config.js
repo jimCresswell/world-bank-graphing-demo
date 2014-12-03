@@ -27,5 +27,8 @@ module.exports = {
         dest: dest + '/data/'
     },
     webRoot: dest,
-    destWatch: dest + '/**/*'
+    destWatch: dest + '/**/*',
+    publish: {
+        src: dest + '/**/*'
+    }
 };

@@ -17,13 +17,12 @@ var defaultZRange = [10, 15];
 // From http://colorbrewer2.org/
 var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
 
-// Legend config
-var legendWidth = 170;
-
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
+
+    chart.hasLegend = true;
 
     chart.cssClass = cssClass;
     d3Svg.classed(cssClass, true);
@@ -35,10 +34,51 @@ exports.init = function() {
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
 
-    // Chart area SVG padding in pixels.
+    chart.recordBaseFontsize();
+
+    chart.setLegendWidth();
+
+    chart.setChartPadding();
+};
+
+
+/**
+ * Set the base font size
+ *
+ * The base font size of the document is driven by
+ * CSS media queries. Having this property and
+ * recalculating it on resize events allows page
+ * elements to be dynamically resized in relative
+ * units.
+ *
+ * @return {undefined}
+ */
+exports.recordBaseFontsize = function() {
+    this.baseFontSize = Number(getComputedStyle(document.body).fontSize.match(/(\d*(\.\d*)?)px/)[1]);
+};
+
+
+exports.setLegendWidth = function() {
+    var chart = this;
+    chart.legendWidth = this.baseFontSize * 12;
+
+    // If the legend is drawn then resize the width of the rectangles.
+    var legendRects = chart.d3Objects.legend.selectAll('rect');
+    if (legendRects.size()) {
+        legendRects
+            .attr({
+                width: chart.legendWidth
+            });
+    }
+};
+
+
+// Chart area SVG padding in pixels.
+exports.setChartPadding = function() {
+    var chart = this;
     chart.padding = {
         top: 25,
-        right: legendWidth + 20,
+        right: chart.legendWidth + 20,
         bottom: 50,
         yAxis: 60
     };
@@ -362,7 +402,7 @@ exports.positionLegend = function() {
     var chart = this;
     chart.d3Objects.legend
         .attr({
-            transform: 'translate(' + (chart.dimensions.width - legendWidth) + ', 10)'
+            transform: 'translate(' + (chart.dimensions.width - chart.legendWidth) + ', 10)'
         })
 };
 
@@ -382,7 +422,7 @@ exports.populateLegend = function() {
 
     legendRegions.append('rect')
         .attr({
-            width: legendWidth,
+            width: chart.legendWidth,
             height: rHeight
         }).style({
             fill: function(d) {return chart.scales.regionColour(d);}

@@ -27,6 +27,9 @@ function Chart(chartOptions, data) {
     chart.defaultAccessors = chartOptions.defaultAccessors;
     chart.zRange = chartOptions.zRange || false;
     chart.accessors = {};
+    chart.hasLegend = false; // Currently overridden in chart type.
+    chart.baseFontSize = false;
+    chart.legendWidth = 0;
     chart.dimensions = {};
     chart.scales = {};
     chart.data = {};
@@ -75,6 +78,10 @@ Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
 };
 
+Chart.prototype.recordBaseFontsize = function() {
+    console.warn('Chart.recordBaseFontsize has not been overriden with a chart type specific method.');
+};
+
 Chart.prototype.positionElements = function() {
     console.warn('Chart.positionElements has not been overriden with a chart type specific method.');
 };
@@ -103,21 +110,36 @@ Chart.prototype.calculateScales = function() {
     console.warn('Chart.calculateScales has not been overriden with a chart type specific method.');
 };
 
+
 Chart.prototype.rescaleDataPoints = function() {
     console.warn('Chart.rescaleDataPoints has not been overriden with a chart type specific method.');
 };
+
 
 Chart.prototype.drawAxes = function() {
     console.warn('Chart.drawAxes has not been overriden with a chart type specific method.');
 };
 
+
 Chart.prototype.positionAxesLabels = function() {
     console.warn('Chart.positionAxesLabels has not been overriden with a chart type specific method.');
 };
 
+
+Chart.prototype.setLegendWidth = function() {
+    console.warn('Chart.setLegendWidth has not been overriden with a chart type specific method.');
+};
+
+
 Chart.prototype.positionLegend = function() {
     console.warn('Chart.positionLegend has not been overriden with a chart type specific method.');
 };
+
+
+Chart.prototype.setChartPadding = function() {
+    console.warn('Chart.setChartPadding has not been overriden with a chart type specific method.');
+};
+
 
 Chart.prototype.getDimensionsFromDom = function() {
     var dimensions;
@@ -166,11 +188,22 @@ Chart.prototype.recordDimensions = function() {
  */
 Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
+        this.recordBaseFontsize();
+
+        if (this.hasLegend) {
+            this.setLegendWidth();
+        }
+
+        this.setChartPadding(); // Depends on legend width which defaults to 0px.
+
         this.positionElements();
         this.calculateScales();
         this.drawAxes();
         this.positionAxesLabels();
-        this.positionLegend();
         this.rescaleDataPoints();
+
+        if (this.hasLegend) {
+            this.positionLegend();
+        }
     }
 };

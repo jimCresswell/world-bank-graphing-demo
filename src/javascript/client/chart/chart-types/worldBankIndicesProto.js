@@ -138,7 +138,7 @@ exports.addRawData = function(rawData) {
         // Unit can be undefined for an index.
         // Unit does not have to contain a symbol.
         if (unit) {
-            matches = unit.match(new RegExp('[\%\$\£]|'+altPercentageString));
+            matches = unit.match(new RegExp('[%$£]|'+altPercentageString));
             symbol = matches ? matches[0] : false;
 
             // Cope with some values being labelled
@@ -338,7 +338,7 @@ exports.labelAxes = function() {
         .append('g')
         .classed('label xAxis__label', true);
 
-    var xAccessor = chart.accessors.x
+    var xAccessor = chart.accessors.x;
     xLabel
         .append('text')
         .text(data.indices[xAccessor].descriptor);
@@ -350,10 +350,10 @@ exports.labelAxes = function() {
         .append('g')
         .classed('label yAxis__label', true);
 
-    var yAccessor = chart.accessors.y
+    var yAccessor = chart.accessors.y;
     yLabel
         .append('text')
-        .text(data.indices[yAccessor].descriptor)
+        .text(data.indices[yAccessor].descriptor);
     yLabel
         .append('title')
         .text(yAccessor);
@@ -403,7 +403,7 @@ exports.positionLegend = function() {
     chart.d3Objects.legend
         .attr({
             transform: 'translate(' + (chart.dimensions.width - chart.legendWidth) + ', 10)'
-        })
+        });
 };
 
 exports.populateLegend = function() {
@@ -429,7 +429,7 @@ exports.populateLegend = function() {
         });
 
     legendRegions.append('text')
-        .text(function(d) {return (/[^\()]*/.exec(d))[0]})
+        .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
             x: 5,
             y: 1,

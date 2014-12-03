@@ -9,7 +9,7 @@ var Controls = require('./controls');
 var Chart = require('./chart');
 var dataService = require('./dataService');
 
-var dataUrlPath = '/data/world-growth-indicators-by-region_Data.json';
+var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-region_Data.json';
 var controlOptions = {id: 'indices-controls'};
 var chartOptions = {
     id: 'chart1-svg',

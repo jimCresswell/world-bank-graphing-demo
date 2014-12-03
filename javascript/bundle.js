@@ -27,17 +27,17 @@ var chartOptions = {
 /**
  * Kick everything off!
  */
-dataService.getData(dataUrlPath)
-    .then(function(data) {
 
-        // Deliberately using 'load' event because
-        // it blocks on stylesheet loading and the
-        // svg dimensions are taken from the DOM.
-        window.addEventListener('load', function onPageLoad() {
-            init(data);
-        });
-    })
-    .done();
+// Deliberately using 'load' event because
+// it blocks on stylesheet loading and the
+// svg dimensions are taken from the DOM.
+window.addEventListener('load', function onPageLoad() {
+    dataService.getData(dataUrlPath)
+        .then(function(data) {
+                init(data);
+        })
+        .done();
+});
 
 
 /**

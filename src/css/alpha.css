@@ -11,6 +11,7 @@
     transform: rotate(-45deg);
     text-align: center;
     vertical-align: middle;
+    white-space: nowrap;
     background-color: red;
     color: white;
     text-shadow:
@@ -18,6 +19,7 @@
         1px -1px 0 #000,
         -1px 1px 0 #000,
         1px 1px 0 #000;
+    transition: font-size 0.7s cubic-bezier(0.0, 0.9, 0.6, 1.5);
 }
 
 .alpha:hover::after {

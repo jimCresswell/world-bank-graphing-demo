@@ -14330,13 +14330,12 @@ exports.populateLegend = function() {
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
             x: 5,
-            y: 1,
+            y: rHeight/1.25,
             'text-rendering': 'optimizeLegibility'
         })
         .style({
             'font-size': '0.8em',
-            'font-weight': 900,
-            'alignment-baseline': 'text-before-edge'
+            'font-weight': 900
         });
 };
 

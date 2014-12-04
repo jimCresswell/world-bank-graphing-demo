@@ -13950,7 +13950,7 @@ exports.setAreaChartPadding = function() {
         top: 50 + legendDimensions.height,
         right: 20,
         bottom: 50,
-        yAxis: 60
+        yAxis: 65
     };
     chart.padding.left = chart.padding.yAxis + 20;
 };
@@ -14136,12 +14136,6 @@ exports.calculateScales = function() {
 };
 
 
-
-exports.draw = function() {
-    this.drawLegend();
-    this.drawChart();
-};
-
 /**
  * Draw the graph
  * @return {undefined}
@@ -14200,6 +14194,11 @@ exports.drawAxes = function() {
     var xSymbol = indices[chart.accessors.x].symbol;
     var ySymbol = indices[chart.accessors.y].symbol;
 
+    // Request a number of x-axis ticks
+    // according to css breakpoint.
+    var numTicks = this.isWide() ? 8 : 3;
+    xAxisFactory.ticks(numTicks);
+
     xAxisFactory.scale(chart.scales.x);
     xAxisFactory.tickFormat(formatValuesFactory(xSymbol));
 
@@ -14248,7 +14247,7 @@ exports.positionAxesLabels = function() {
 
     // Calculated values are dynamic centering of labels, hardcoded values are spacing away from axes.
     chart.d3Objects.axes.x.select('.label')
-        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 40)'})
+        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 45)'})
         .style({'text-anchor': 'middle'});
 
     // The rotation means the first coordinate in the translate is effectively y, second x.
@@ -14338,11 +14337,15 @@ exports.resetLegendDimensions = function() {
 };
 
 
+exports.isWide = function() {
+    return parseInt(this.breakpointWidth) >= this.breakPoints.medium;
+};
+
+
 // Calculate the current optimum number
 // of columns for the legend.
 exports.numLegendColumns = function() {
-    var isWide = parseInt(this.breakpointWidth) >= this.breakPoints.medium;
-    return isWide ? 3 : 2;
+    return this.isWide() ? 3 : 2;
 };
 
 

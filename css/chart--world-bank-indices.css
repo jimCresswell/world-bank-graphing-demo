@@ -1,3 +1,11 @@
+/* Default circle fill colour */
 .chart--world-bank-indices circle {
     fill: blue;
 }
+
+/* Axis label font size */
+.chart--world-bank-indices .label {
+    font-size: 1.3em;
+    font-weight: 500;
+    text-rendering: optimizeLegibility;
+ }

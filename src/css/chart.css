@@ -26,24 +26,19 @@
     }
 }
 
-@media (min-width: 600px) {
-    .chart-container .chart {
-        width: 500px;
-        height: 333px;
-    }
-}
-
-@media (min-width: 800px) {
+/* Aspect ration 3:2 */
+@media (min-width: 768px) {
     .chart-container .chart {
         width: 600px;
         height: 400px;
     }
 }
 
-@media (min-width: 1280px) {
+/* Aspect ration 3:2 */
+@media (min-width: 1024px) {
     .chart-container .chart {
-        width: 750px;
-        height: 500px;
+        width: 800px;
+        height: 533px;
     }
 }
 

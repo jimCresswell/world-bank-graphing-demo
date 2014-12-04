@@ -46,7 +46,7 @@ main {
   box-sizing: border-box; /* Padding won't make height exceed 100% */
   min-height: 100%; /* No gaps below content */
   font-size: 1rem;
-  max-width: 38em;
+  max-width: 60em;
   padding: 2em 0.4em;
   margin: 0 auto;
   background-color: white;
@@ -135,11 +135,7 @@ main > footer {
  * Wide view port (e.g. landscape tablet).
  */
 
-@media (min-width: 800px) {
-  main {
-    max-width: 50em;
-  }
-
+@media (min-width: 768px) {
   main > header {
     max-width: 38em;
     margin-left: auto;
@@ -160,13 +156,12 @@ main > footer {
  * Wider view port (e.g. monitor, tv).
  */
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   html {
     font-size: 18px;
   }
 
   main {
-    max-width: 60em;
     padding-left: 1em;
     padding-right: 1em;
   }

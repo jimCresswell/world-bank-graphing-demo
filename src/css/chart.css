@@ -19,13 +19,12 @@
     border: 1px solid #c0c0c0;
 }
 
-/* Aspect ration 3:4 for very narrow viewports */
+/* Tall and thin */
 .chart-container .chart {
-    width: 300px;
-    height: 400px;
+    width: 320px;
+    height: 500px;
 }
 
-/* Aspect ration 3:2 */
 @media (min-width: 480px) {
 
     /* Breakpoint hinting mechanism. */
@@ -35,11 +34,10 @@
 
     .chart-container .chart {
         width: 400px;
-        height: 267px;
+        height: 600px;
     }
 }
 
-/* Aspect ration 3:2 */
 @media (min-width: 768px) {
 
     /* Breakpoint hinting mechanism. */
@@ -49,7 +47,7 @@
 
     .chart-container .chart {
         width: 600px;
-        height: 400px;
+        height: 500px;
     }
 }
 

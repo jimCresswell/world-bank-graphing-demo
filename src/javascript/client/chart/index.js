@@ -35,6 +35,15 @@ function Chart(chartOptions, data) {
     chart.data = {};
     chart.d3Objects = {};
 
+    // Expected breakpoint reference.
+    // Values are minimum width in px at which media rule applies.
+    chart.breakPoints = {
+        'verynarrow': 0,
+        'narrow': 480,
+        'medium': 768,
+        'wide': 1024
+    };
+
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
         return new Chart(chartOptions, data);
@@ -61,18 +70,36 @@ function Chart(chartOptions, data) {
     // to chart.onResize will work the first time.
     chart.recordDimensions();
 
+    chart.recordBaseFontsize();
+
     // Record the width of the current breakpoint if any.
     chart.recordbreakpointWidth();
 
-    chart.positionElements();
+    // Depends viewport width and breakpoint.
+    chart.setLegendWidth();
 
+    // Data operations.
     chart.addRawData(data);
-
     chart.setAccessors();
-
     chart.deriveCurrentData();
 
+    // Ordinal scales only dependent on the data.
+    chart.calculateOrdinalScales();
+
+    // Draw the legend.
+    chart.drawLegend();
+
+    // The chart area padding depends on the computed legend dimensions.
+    chart.setAreaChartPadding();
+
+    // Position the chart area and the axes. Depends on chart area padding.
+    chart.positionChartElements();
+
+    // Dependent on data and chart are dimensions and necessary drawing chart area.
     chart.calculateScales();
+
+    // Draw the chart.
+    chart.drawChart();
 }
 
 
@@ -81,8 +108,8 @@ Chart.prototype.init = function() {
 };
 
 
-Chart.prototype.positionElements = function() {
-    console.warn('Chart.positionElements has not been overriden with a chart type specific method.');
+Chart.prototype.positionChartElements = function() {
+    console.warn('Chart.positionChartElements has not been overriden with a chart type specific method.');
 };
 
 Chart.prototype.draw = function() {
@@ -130,13 +157,18 @@ Chart.prototype.setLegendWidth = function() {
 };
 
 
+Chart.prototype.resetLegendDimensions = function() {
+    console.warn('Chart.resetLegendDimensions has not been overriden with a chart type specific method.');
+};
+
+
 Chart.prototype.positionLegend = function() {
     console.warn('Chart.positionLegend has not been overriden with a chart type specific method.');
 };
 
 
-Chart.prototype.setChartPadding = function() {
-    console.warn('Chart.setChartPadding has not been overriden with a chart type specific method.');
+Chart.prototype.setAreaChartPadding = function() {
+    console.warn('Chart.setAreaChartPadding has not been overriden with a chart type specific method.');
 };
 
 
@@ -199,8 +231,8 @@ Chart.prototype.recordBaseFontsize = function() {
 
 Chart.prototype.recordbreakpointWidth = function() {
 
-    // If no breakpoint is set replace the empty string with false.
-    this.breakpointWidth = getbreakpointWidth() || false;
+    // If no breakpoint is set replace the empty string with 0.
+    this.breakpointWidth = getbreakpointWidth() || 0;
 };
 
 
@@ -215,20 +247,17 @@ Chart.prototype.onResize = function() {
         this.recordbreakpointWidth();
 
         if (this.hasLegend) {
-            this.setLegendWidth();
+            this.resetLegendDimensions();
+            this.positionLegend();
         }
 
-        this.setChartPadding(); // Depends on legend width which defaults to 0px.
+        this.setAreaChartPadding(); // Depends on legend dimensions.
 
-        this.positionElements();
+        this.positionChartElements();
         this.calculateScales();
         this.drawAxes();
         this.positionAxesLabels();
         this.rescaleDataPoints();
-
-        if (this.hasLegend) {
-            this.positionLegend();
-        }
     }
 };
 

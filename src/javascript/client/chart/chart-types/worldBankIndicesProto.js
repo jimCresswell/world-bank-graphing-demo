@@ -17,12 +17,17 @@ var defaultZRange = [10, 15];
 // From http://colorbrewer2.org/
 var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
 
+// Legend configuration.
+// The padding between side by side item groups in the legend in px.
+var legendItemPadding = 10;
+
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
 
     chart.hasLegend = true;
+    chart.legendItemPadding = legendItemPadding;
 
     chart.cssClass = cssClass;
     d3Svg.classed(cssClass, true);
@@ -33,36 +38,64 @@ exports.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
+};
 
-    chart.recordBaseFontsize();
 
-    chart.setLegendWidth();
+/**
+ * Is the chart wide according to the current breakpoint width
+ * and the expected breakpoints.
+ *
+ * @return {Boolean} Is the chart wide?
+ */
+exports.isWide = function() {
+    return parseInt(this.breakpointWidth) >= this.breakPoints.wide;
+};
 
-    chart.setChartPadding();
+
+exports.isVeryNarrow = function() {
+    return parseInt(this.breakpointWidth) < this.breakPoints.narrow;
+};
+
+
+exports.resetLegendDimensions = function() {
+    this.setLegendWidth();
+    this.setLegendRectWidth();
+    this.positionLegendItems();
 };
 
 
 exports.setLegendWidth = function() {
     var chart = this;
-    chart.legendWidth = this.baseFontSize * 12;
 
-    // If the legend is drawn then resize the width of the rectangles.
-    var legendRects = chart.d3Objects.legend.selectAll('rect');
-    if (legendRects.size()) {
-        legendRects
-            .attr({
-                width: chart.legendWidth
-            });
-    }
+    chart.legendWidth = this.baseFontSize * 24;
+};
+
+
+exports.setLegendRectWidth = function() {
+    var chart = this;
+    var rectWidth;
+
+    rectWidth = (chart.legendWidth/2) - chart.legendItemPadding;
+
+    // Set the width on the legend item rectangles.
+    chart.d3Objects.legend.selectAll('.legend__item rect')
+        .attr({
+            width: rectWidth
+        });
 };
 
 
 // Chart area SVG padding in pixels.
-exports.setChartPadding = function() {
+// Depends on the computed dimensions of the legend.
+exports.setAreaChartPadding = function() {
     var chart = this;
+    var legend = chart.d3Objects.legend;
+
+    var legendDimensions = legend.node().getBoundingClientRect();
+
     chart.padding = {
-        top: 25,
-        right: chart.legendWidth + 20,
+        top: 30 + legendDimensions.height,
+        right: 20,
         bottom: 50,
         yAxis: 60
     };
@@ -70,7 +103,7 @@ exports.setChartPadding = function() {
 };
 
 
-exports.positionElements = function () {
+exports.positionChartElements = function () {
     var chart = this;
 
     // Axes and plot shifted right by the padding.
@@ -211,6 +244,20 @@ exports.deriveCurrentData = function() {
 };
 
 
+// Ordinal scales dependent only on the data.
+exports.calculateOrdinalScales = function() {
+    var scales = this.scales;
+
+    // Ordinal scale mapping region name to a colour
+    // from a range generated with
+    // http://colorbrewer2.org/
+    scales.regionColour = d3.scale.ordinal()
+        .domain(this.data.regions)
+        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
+};
+
+
+// Dimensional scales dependent on the viewport dimensions.
 exports.calculateScales = function() {
     var extremes = this.data.extremes;
     var scales = this.scales;
@@ -230,27 +277,23 @@ exports.calculateScales = function() {
             .nice();
     });
 
-    // Ordinal scale mapping region name to a colour
-    // from a range generated with
-    // http://colorbrewer2.org/
-    scales.regionColour = d3.scale.ordinal()
-        .domain(this.data.regions)
-        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
-
     scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
     scales.z.range(this.zRange || defaultZRange);
 };
 
 
+
+exports.draw = function() {
+    this.drawLegend();
+    this.drawChart();
+};
+
 /**
  * Draw the graph
  * @return {undefined}
  */
-exports.draw = function() {
-    // DEBUG
-    console.log('drawing...');
-
+exports.drawChart = function() {
     var chart = this;
 
     chart.drawAxes();
@@ -287,9 +330,12 @@ exports.draw = function() {
             fill: function(d) {return chart.scales.regionColour(d.region); },
             stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
         });
+};
 
-    chart.positionLegend();
-    chart.populateLegend();
+
+exports.drawLegend = function() {
+    this.positionLegend();
+    this.populateLegend();
 };
 
 
@@ -382,46 +428,74 @@ exports.enableDatapointInteractions = function() {
 };
 
 
+// Position the legend on the chart.
 exports.positionLegend = function() {
     var chart = this;
+    var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
+    var yOffset = 0;
+
     chart.d3Objects.legend
         .attr({
-            transform: 'translate(' + (chart.dimensions.width - chart.legendWidth) + ', 10)'
+            transform: 'translate(' + xOffset  + ',' + yOffset + ')'
         });
 };
+
 
 exports.populateLegend = function() {
     var chart = this;
     var data = chart.data;
     var legend = chart.d3Objects.legend;
-    var rHeight = 17;
+    var rectHeight = 17;
 
     var legendRegions = legend.selectAll('g')
         .data(data.regions)
         .enter()
         .append('g')
-            .attr({
-                transform: function(d,i) {return 'translate(0,' + (i*20) + ')';}
-            });
+            .classed('legend__item', true);
+
+    chart.positionLegendItems();
 
     legendRegions.append('rect')
         .attr({
-            width: chart.legendWidth,
-            height: rHeight
+            height: rectHeight
         }).style({
             fill: function(d) {return chart.scales.regionColour(d);}
         });
+
+    chart.setLegendRectWidth();
 
     legendRegions.append('text')
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
             x: 5,
-            y: rHeight/1.25,
+            y: rectHeight/1.25,
             'text-rendering': 'optimizeLegibility'
         })
         .style({
             'font-size': '0.8em',
             'font-weight': 900
+        });
+};
+
+
+exports.positionLegendItems = function () {
+    var chart = this;
+    var groupYOffset = 20;
+    var maxItemsInColumn = 5;
+
+    chart.d3Objects.legend.selectAll('.legend__item')
+        .attr({
+            transform: function(d, index) {
+                var column, row, xOffset, yOffset;
+
+                // Wide legend with multi-column layout.
+                column = Math.floor(index/maxItemsInColumn); // 0 .. N
+                row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
+                xOffset = (chart.legendWidth/2) * column;
+                yOffset = groupYOffset * row;
+
+                return 'translate(' + xOffset + ','+ yOffset + ')';
+            }
         });
 };
 
@@ -536,6 +610,7 @@ exports.appendTooltip = function(node) {
         })
         .style({'text-anchor': textAnchor});
 };
+
 
 
 /**

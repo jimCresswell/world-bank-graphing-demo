@@ -52,15 +52,12 @@ function init(data) {
 
     // TODO instantiate a DOM event delegate for the chart.
 
-    chart = new Chart(chartOptions, data);
     controls = new Controls(controlOptions, data);
+    chart = new Chart(chartOptions, data);
 
     controls.bindToChart(chart);
 
     addResizeListener();
-
-    // Draw the chart.
-    chart.draw();
 
     // Call onResize at most once every throttleLimit milliseconds.
     function addResizeListener() {

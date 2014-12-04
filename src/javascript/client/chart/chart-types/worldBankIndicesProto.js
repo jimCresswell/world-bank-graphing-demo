@@ -41,50 +41,6 @@ exports.init = function() {
 };
 
 
-/**
- * Is the chart wide according to the current breakpoint width
- * and the expected breakpoints.
- *
- * @return {Boolean} Is the chart wide?
- */
-exports.isWide = function() {
-    return parseInt(this.breakpointWidth) >= this.breakPoints.wide;
-};
-
-
-exports.isVeryNarrow = function() {
-    return parseInt(this.breakpointWidth) < this.breakPoints.narrow;
-};
-
-
-exports.resetLegendDimensions = function() {
-    this.setLegendWidth();
-    this.setLegendRectWidth();
-    this.positionLegendItems();
-};
-
-
-exports.setLegendWidth = function() {
-    var chart = this;
-
-    chart.legendWidth = this.baseFontSize * 24;
-};
-
-
-exports.setLegendRectWidth = function() {
-    var chart = this;
-    var rectWidth;
-
-    rectWidth = (chart.legendWidth/2) - chart.legendItemPadding;
-
-    // Set the width on the legend item rectangles.
-    chart.d3Objects.legend.selectAll('.legend__item rect')
-        .attr({
-            width: rectWidth
-        });
-};
-
-
 // Chart area SVG padding in pixels.
 // Depends on the computed dimensions of the legend.
 exports.setAreaChartPadding = function() {
@@ -478,20 +434,63 @@ exports.populateLegend = function() {
 };
 
 
+exports.resetLegendDimensions = function() {
+    this.setLegendWidth();
+    this.setLegendRectWidth();
+    this.positionLegendItems();
+};
+
+
+// Calculate the current optimum number
+// of columns for the legend.
+exports.numLegendColumns = function() {
+    var isWide = parseInt(this.breakpointWidth) >= this.breakPoints.medium;
+    return isWide ? 3 : 2;
+};
+
+
+exports.setLegendWidth = function() {
+    var chart = this;
+    var singleColumnEms = 12;
+    var numColumns = chart.numLegendColumns();
+
+    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+};
+
+
+exports.setLegendRectWidth = function() {
+    var chart = this;
+    var numColumns = chart.numLegendColumns();
+    var rectWidth;
+
+    rectWidth = (chart.legendWidth/numColumns) - chart.legendItemPadding*(numColumns-1);
+
+    // Set the width on the legend item rectangles.
+    chart.d3Objects.legend.selectAll('.legend__item rect')
+        .attr({
+            width: rectWidth
+        });
+};
+
+
 exports.positionLegendItems = function () {
     var chart = this;
+    var legendItems = chart.d3Objects.legend.selectAll('.legend__item');
+    var numColumns = chart.numLegendColumns();
+    var maxItemsInColumn = Math.ceil(legendItems.size()/numColumns);
+    var groupXoffset = chart.legendWidth/numColumns;
     var groupYOffset = 20;
-    var maxItemsInColumn = 5;
 
-    chart.d3Objects.legend.selectAll('.legend__item')
+    legendItems
         .attr({
             transform: function(d, index) {
                 var column, row, xOffset, yOffset;
 
                 // Wide legend with multi-column layout.
-                column = Math.floor(index/maxItemsInColumn); // 0 .. N
+                column = Math.floor(index/maxItemsInColumn); // 0 .. numColumns-1
                 row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
-                xOffset = (chart.legendWidth/2) * column;
+
+                xOffset = groupXoffset * column;
                 yOffset = groupYOffset * row;
 
                 return 'translate(' + xOffset + ','+ yOffset + ')';

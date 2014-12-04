@@ -42,22 +42,6 @@ exports.init = function() {
 };
 
 
-/**
- * Set the base font size
- *
- * The base font size of the document is driven by
- * CSS media queries. Having this property and
- * recalculating it on resize events allows page
- * elements to be dynamically resized in relative
- * units.
- *
- * @return {undefined}
- */
-exports.recordBaseFontsize = function() {
-    this.baseFontSize = Number(getComputedStyle(document.body).fontSize.match(/(\d*(\.\d*)?)px/)[1]);
-};
-
-
 exports.setLegendWidth = function() {
     var chart = this;
     chart.legendWidth = this.baseFontSize * 12;

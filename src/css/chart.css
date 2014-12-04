@@ -1,6 +1,13 @@
 /* Manually add imports here. */
 @import url("chart--world-bank-indices.css");
 
+
+/* Breakpoint hinting mechanism. */
+#breakpointHint {
+  display: none;
+}
+
+
 /* Optional '.charts' container */
 .charts {
     text-align: center;
@@ -20,6 +27,12 @@
 
 /* Aspect ration 3:2 */
 @media (min-width: 480px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 480px;
+    }
+
     .chart-container .chart {
         width: 400px;
         height: 267px;
@@ -28,6 +41,12 @@
 
 /* Aspect ration 3:2 */
 @media (min-width: 768px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 768px;
+    }
+
     .chart-container .chart {
         width: 600px;
         height: 400px;
@@ -36,6 +55,12 @@
 
 /* Aspect ration 3:2 */
 @media (min-width: 1024px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 1024px;
+    }
+
     .chart-container .chart {
         width: 800px;
         height: 533px;

@@ -53,7 +53,6 @@ function Chart(chartOptions, data) {
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
-
     // Do some setup.
     chart.init();
 
@@ -61,6 +60,9 @@ function Chart(chartOptions, data) {
     // so that scales can be caculated and calls
     // to chart.onResize will work the first time.
     chart.recordDimensions();
+
+    // Record the width of the current breakpoint if any.
+    chart.recordbreakpointWidth();
 
     chart.positionElements();
 
@@ -78,9 +80,6 @@ Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
 };
 
-Chart.prototype.recordBaseFontsize = function() {
-    console.warn('Chart.recordBaseFontsize has not been overriden with a chart type specific method.');
-};
 
 Chart.prototype.positionElements = function() {
     console.warn('Chart.positionElements has not been overriden with a chart type specific method.');
@@ -183,12 +182,37 @@ Chart.prototype.recordDimensions = function() {
 
 
 /**
+ * Set the base font size
+ *
+ * The base font size of the document is driven by
+ * CSS media queries. Having this property and
+ * recalculating it on resize events allows page
+ * elements to be dynamically resized in relative
+ * units.
+ *
+ * @return {undefined}
+ */
+Chart.prototype.recordBaseFontsize = function() {
+    this.baseFontSize = Number(getComputedStyle(document.body).fontSize.match(/(\d*(\.\d*)?)px/)[1]);
+};
+
+
+Chart.prototype.recordbreakpointWidth = function() {
+
+    // If no breakpoint is set replace the empty string with false.
+    this.breakpointWidth = getbreakpointWidth() || false;
+};
+
+
+/**
  * If resizing the viewport has resized the SVG then re-draw.
+ *
  * @return {undefined}
  */
 Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
         this.recordBaseFontsize();
+        this.recordbreakpointWidth();
 
         if (this.hasLegend) {
             this.setLegendWidth();
@@ -207,3 +231,33 @@ Chart.prototype.onResize = function() {
         }
     }
 };
+
+
+/* HELPERS */
+
+
+/**
+ * Read the width of the breakpointHint element
+ * which matches the CSS media query rule which
+ * set it.
+ *
+ * @return {string} breakpointWidth
+ */
+function getbreakpointWidth() {
+    var hintCssId = 'breakpointHint';
+    var breakpointHintEl = document.getElementById(hintCssId);
+
+    // If it's not there insert it into the DOM.
+    if (!breakpointHintEl) {
+        breakpointHintEl = document.createElement('div');
+        breakpointHintEl.id = hintCssId;
+        document.body.appendChild(breakpointHintEl);
+    }
+
+    var matchingStylesheets = window.getMatchedCSSRules(breakpointHintEl);
+    var lastStyleSheet = matchingStylesheets[matchingStylesheets.length -1].style;
+
+    var breakpointWidth = lastStyleSheet.width;
+
+    return breakpointWidth;
+}

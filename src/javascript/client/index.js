@@ -64,7 +64,8 @@ function init(data) {
 
     // Call onResize at most once every throttleLimit milliseconds.
     function addResizeListener() {
-        var throttleLimit = 100; // Milliseconds.
-        window.addEventListener('resize', throttle(chart.onResize.bind(chart), throttleLimit, {trailing: true}));
+        var throttleLimit = 100;
+        var chartResize = chart.onResize.bind(chart);
+        window.addEventListener('resize', throttle(chartResize, throttleLimit, {trailing: true}));
     }
 }

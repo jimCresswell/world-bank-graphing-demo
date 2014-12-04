@@ -50,7 +50,7 @@ exports.setAreaChartPadding = function() {
     var legendDimensions = legend.node().getBoundingClientRect();
 
     chart.padding = {
-        top: 30 + legendDimensions.height,
+        top: 50 + legendDimensions.height,
         right: 20,
         bottom: 50,
         yAxis: 60

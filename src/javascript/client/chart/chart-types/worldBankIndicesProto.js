@@ -53,7 +53,7 @@ exports.setAreaChartPadding = function() {
         top: 50 + legendDimensions.height,
         right: 20,
         bottom: 50,
-        yAxis: 60
+        yAxis: 65
     };
     chart.padding.left = chart.padding.yAxis + 20;
 };
@@ -351,7 +351,7 @@ exports.positionAxesLabels = function() {
 
     // Calculated values are dynamic centering of labels, hardcoded values are spacing away from axes.
     chart.d3Objects.axes.x.select('.label')
-        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 40)'})
+        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 45)'})
         .style({'text-anchor': 'middle'});
 
     // The rotation means the first coordinate in the translate is effectively y, second x.

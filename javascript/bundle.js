@@ -53,22 +53,21 @@ function init(data) {
 
     // TODO instantiate a DOM event delegate for the chart.
 
-    chart = new Chart(chartOptions, data);
     controls = new Controls(controlOptions, data);
+    chart = new Chart(chartOptions, data);
 
     controls.bindToChart(chart);
 
     addResizeListener();
 
-    // Draw the chart.
-    chart.draw();
-
     // Call onResize at most once every throttleLimit milliseconds.
     function addResizeListener() {
-        var throttleLimit = 100; // Milliseconds.
-        window.addEventListener('resize', throttle(chart.onResize.bind(chart), throttleLimit, {trailing: true}));
+        var throttleLimit = 100;
+        var chartResize = chart.onResize.bind(chart);
+        window.addEventListener('resize', throttle(chartResize, throttleLimit, {trailing: true}));
     }
 }
+
 },{"./chart":47,"./controls":48,"./dataService":49,"lodash.throttle":34}],2:[function(require,module,exports){
 // shim for using process in browser
 
@@ -13915,12 +13914,17 @@ var defaultZRange = [10, 15];
 // From http://colorbrewer2.org/
 var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
 
+// Legend configuration.
+// The padding between side by side item groups in the legend in px.
+var legendItemPadding = 10;
+
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
 
     chart.hasLegend = true;
+    chart.legendItemPadding = legendItemPadding;
 
     chart.cssClass = cssClass;
     d3Svg.classed(cssClass, true);
@@ -13931,52 +13935,20 @@ exports.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
-
-    chart.recordBaseFontsize();
-
-    chart.setLegendWidth();
-
-    chart.setChartPadding();
-};
-
-
-/**
- * Set the base font size
- *
- * The base font size of the document is driven by
- * CSS media queries. Having this property and
- * recalculating it on resize events allows page
- * elements to be dynamically resized in relative
- * units.
- *
- * @return {undefined}
- */
-exports.recordBaseFontsize = function() {
-    this.baseFontSize = Number(getComputedStyle(document.body).fontSize.match(/(\d*(\.\d*)?)px/)[1]);
-};
-
-
-exports.setLegendWidth = function() {
-    var chart = this;
-    chart.legendWidth = this.baseFontSize * 12;
-
-    // If the legend is drawn then resize the width of the rectangles.
-    var legendRects = chart.d3Objects.legend.selectAll('rect');
-    if (legendRects.size()) {
-        legendRects
-            .attr({
-                width: chart.legendWidth
-            });
-    }
 };
 
 
 // Chart area SVG padding in pixels.
-exports.setChartPadding = function() {
+// Depends on the computed dimensions of the legend.
+exports.setAreaChartPadding = function() {
     var chart = this;
+    var legend = chart.d3Objects.legend;
+
+    var legendDimensions = legend.node().getBoundingClientRect();
+
     chart.padding = {
-        top: 25,
-        right: chart.legendWidth + 20,
+        top: 50 + legendDimensions.height,
+        right: 20,
         bottom: 50,
         yAxis: 60
     };
@@ -13984,7 +13956,7 @@ exports.setChartPadding = function() {
 };
 
 
-exports.positionElements = function () {
+exports.positionChartElements = function () {
     var chart = this;
 
     // Axes and plot shifted right by the padding.
@@ -14125,6 +14097,20 @@ exports.deriveCurrentData = function() {
 };
 
 
+// Ordinal scales dependent only on the data.
+exports.calculateOrdinalScales = function() {
+    var scales = this.scales;
+
+    // Ordinal scale mapping region name to a colour
+    // from a range generated with
+    // http://colorbrewer2.org/
+    scales.regionColour = d3.scale.ordinal()
+        .domain(this.data.regions)
+        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
+};
+
+
+// Dimensional scales dependent on the viewport dimensions.
 exports.calculateScales = function() {
     var extremes = this.data.extremes;
     var scales = this.scales;
@@ -14144,27 +14130,23 @@ exports.calculateScales = function() {
             .nice();
     });
 
-    // Ordinal scale mapping region name to a colour
-    // from a range generated with
-    // http://colorbrewer2.org/
-    scales.regionColour = d3.scale.ordinal()
-        .domain(this.data.regions)
-        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
-
     scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
     scales.z.range(this.zRange || defaultZRange);
 };
 
 
+
+exports.draw = function() {
+    this.drawLegend();
+    this.drawChart();
+};
+
 /**
  * Draw the graph
  * @return {undefined}
  */
-exports.draw = function() {
-    // DEBUG
-    console.log('drawing...');
-
+exports.drawChart = function() {
     var chart = this;
 
     chart.drawAxes();
@@ -14201,9 +14183,12 @@ exports.draw = function() {
             fill: function(d) {return chart.scales.regionColour(d.region); },
             stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
         });
+};
 
-    chart.positionLegend();
-    chart.populateLegend();
+
+exports.drawLegend = function() {
+    this.positionLegend();
+    this.populateLegend();
 };
 
 
@@ -14296,46 +14281,117 @@ exports.enableDatapointInteractions = function() {
 };
 
 
+// Position the legend on the chart.
 exports.positionLegend = function() {
     var chart = this;
+    var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
+    var yOffset = 0;
+
     chart.d3Objects.legend
         .attr({
-            transform: 'translate(' + (chart.dimensions.width - chart.legendWidth) + ', 10)'
+            transform: 'translate(' + xOffset  + ',' + yOffset + ')'
         });
 };
+
 
 exports.populateLegend = function() {
     var chart = this;
     var data = chart.data;
     var legend = chart.d3Objects.legend;
-    var rHeight = 17;
+    var rectHeight = 17;
 
     var legendRegions = legend.selectAll('g')
         .data(data.regions)
         .enter()
         .append('g')
-            .attr({
-                transform: function(d,i) {return 'translate(0,' + (i*20) + ')';}
-            });
+            .classed('legend__item', true);
+
+    chart.positionLegendItems();
 
     legendRegions.append('rect')
         .attr({
-            width: chart.legendWidth,
-            height: rHeight
+            height: rectHeight
         }).style({
             fill: function(d) {return chart.scales.regionColour(d);}
         });
+
+    chart.setLegendRectWidth();
 
     legendRegions.append('text')
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
             x: 5,
-            y: rHeight/1.25,
+            y: rectHeight/1.25,
             'text-rendering': 'optimizeLegibility'
         })
         .style({
             'font-size': '0.8em',
             'font-weight': 900
+        });
+};
+
+
+exports.resetLegendDimensions = function() {
+    this.setLegendWidth();
+    this.setLegendRectWidth();
+    this.positionLegendItems();
+};
+
+
+// Calculate the current optimum number
+// of columns for the legend.
+exports.numLegendColumns = function() {
+    var isWide = parseInt(this.breakpointWidth) >= this.breakPoints.medium;
+    return isWide ? 3 : 2;
+};
+
+
+exports.setLegendWidth = function() {
+    var chart = this;
+    var singleColumnEms = 12;
+    var numColumns = chart.numLegendColumns();
+
+    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+};
+
+
+exports.setLegendRectWidth = function() {
+    var chart = this;
+    var numColumns = chart.numLegendColumns();
+    var rectWidth;
+
+    rectWidth = (chart.legendWidth/numColumns) - chart.legendItemPadding*(numColumns-1);
+
+    // Set the width on the legend item rectangles.
+    chart.d3Objects.legend.selectAll('.legend__item rect')
+        .attr({
+            width: rectWidth
+        });
+};
+
+
+exports.positionLegendItems = function () {
+    var chart = this;
+    var legendItems = chart.d3Objects.legend.selectAll('.legend__item');
+    var numColumns = chart.numLegendColumns();
+    var maxItemsInColumn = Math.ceil(legendItems.size()/numColumns);
+    var groupXoffset = chart.legendWidth/numColumns;
+    var groupYOffset = 20;
+
+    legendItems
+        .attr({
+            transform: function(d, index) {
+                var column, row, xOffset, yOffset;
+
+                // Wide legend with multi-column layout.
+                column = Math.floor(index/maxItemsInColumn); // 0 .. numColumns-1
+                row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
+
+                xOffset = groupXoffset * column;
+                yOffset = groupYOffset * row;
+
+                return 'translate(' + xOffset + ','+ yOffset + ')';
+            }
         });
 };
 
@@ -14452,6 +14508,7 @@ exports.appendTooltip = function(node) {
 };
 
 
+
 /**
  * Helpers
  */
@@ -14516,6 +14573,15 @@ function Chart(chartOptions, data) {
     chart.data = {};
     chart.d3Objects = {};
 
+    // Expected breakpoint reference.
+    // Values are minimum width in px at which media rule applies.
+    chart.breakPoints = {
+        'verynarrow': 0,
+        'narrow': 480,
+        'medium': 768,
+        'wide': 1024
+    };
+
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
         return new Chart(chartOptions, data);
@@ -14534,7 +14600,6 @@ function Chart(chartOptions, data) {
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
-
     // Do some setup.
     chart.init();
 
@@ -14543,15 +14608,36 @@ function Chart(chartOptions, data) {
     // to chart.onResize will work the first time.
     chart.recordDimensions();
 
-    chart.positionElements();
+    chart.recordBaseFontsize();
 
+    // Record the width of the current breakpoint if any.
+    chart.recordbreakpointWidth();
+
+    // Depends viewport width and breakpoint.
+    chart.setLegendWidth();
+
+    // Data operations.
     chart.addRawData(data);
-
     chart.setAccessors();
-
     chart.deriveCurrentData();
 
+    // Ordinal scales only dependent on the data.
+    chart.calculateOrdinalScales();
+
+    // Draw the legend.
+    chart.drawLegend();
+
+    // The chart area padding depends on the computed legend dimensions.
+    chart.setAreaChartPadding();
+
+    // Position the chart area and the axes. Depends on chart area padding.
+    chart.positionChartElements();
+
+    // Dependent on data and chart are dimensions and necessary drawing chart area.
     chart.calculateScales();
+
+    // Draw the chart.
+    chart.drawChart();
 }
 
 
@@ -14559,12 +14645,9 @@ Chart.prototype.init = function() {
     console.warn('Chart.init has not been overriden with a chart type specific method.');
 };
 
-Chart.prototype.recordBaseFontsize = function() {
-    console.warn('Chart.recordBaseFontsize has not been overriden with a chart type specific method.');
-};
 
-Chart.prototype.positionElements = function() {
-    console.warn('Chart.positionElements has not been overriden with a chart type specific method.');
+Chart.prototype.positionChartElements = function() {
+    console.warn('Chart.positionChartElements has not been overriden with a chart type specific method.');
 };
 
 Chart.prototype.draw = function() {
@@ -14612,13 +14695,18 @@ Chart.prototype.setLegendWidth = function() {
 };
 
 
+Chart.prototype.resetLegendDimensions = function() {
+    console.warn('Chart.resetLegendDimensions has not been overriden with a chart type specific method.');
+};
+
+
 Chart.prototype.positionLegend = function() {
     console.warn('Chart.positionLegend has not been overriden with a chart type specific method.');
 };
 
 
-Chart.prototype.setChartPadding = function() {
-    console.warn('Chart.setChartPadding has not been overriden with a chart type specific method.');
+Chart.prototype.setAreaChartPadding = function() {
+    console.warn('Chart.setAreaChartPadding has not been overriden with a chart type specific method.');
 };
 
 
@@ -14664,31 +14752,82 @@ Chart.prototype.recordDimensions = function() {
 
 
 /**
+ * Set the base font size
+ *
+ * The base font size of the document is driven by
+ * CSS media queries. Having this property and
+ * recalculating it on resize events allows page
+ * elements to be dynamically resized in relative
+ * units.
+ *
+ * @return {undefined}
+ */
+Chart.prototype.recordBaseFontsize = function() {
+    this.baseFontSize = Number(getComputedStyle(document.body).fontSize.match(/(\d*(\.\d*)?)px/)[1]);
+};
+
+
+Chart.prototype.recordbreakpointWidth = function() {
+
+    // If no breakpoint is set replace the empty string with 0.
+    this.breakpointWidth = getbreakpointWidth() || 0;
+};
+
+
+/**
  * If resizing the viewport has resized the SVG then re-draw.
+ *
  * @return {undefined}
  */
 Chart.prototype.onResize = function() {
     if (this.recordDimensions()) {
         this.recordBaseFontsize();
+        this.recordbreakpointWidth();
 
         if (this.hasLegend) {
-            this.setLegendWidth();
+            this.resetLegendDimensions();
+            this.positionLegend();
         }
 
-        this.setChartPadding(); // Depends on legend width which defaults to 0px.
+        this.setAreaChartPadding(); // Depends on legend dimensions.
 
-        this.positionElements();
+        this.positionChartElements();
         this.calculateScales();
         this.drawAxes();
         this.positionAxesLabels();
         this.rescaleDataPoints();
-
-        if (this.hasLegend) {
-            this.positionLegend();
-        }
     }
 };
 
+
+/* HELPERS */
+
+
+/**
+ * Read the width of the breakpointHint element
+ * which matches the CSS media query rule which
+ * set it.
+ *
+ * @return {string} breakpointWidth
+ */
+function getbreakpointWidth() {
+    var hintCssId = 'breakpointHint';
+    var breakpointHintEl = document.getElementById(hintCssId);
+
+    // If it's not there insert it into the DOM.
+    if (!breakpointHintEl) {
+        breakpointHintEl = document.createElement('div');
+        breakpointHintEl.id = hintCssId;
+        document.body.appendChild(breakpointHintEl);
+    }
+
+    var matchingStylesheets = window.getMatchedCSSRules(breakpointHintEl);
+    var lastStyleSheet = matchingStylesheets[matchingStylesheets.length -1].style;
+
+    var breakpointWidth = lastStyleSheet.width;
+
+    return breakpointWidth;
+}
 },{"./chart-types":45,"lodash.assign":4}],48:[function(require,module,exports){
 /**
  * Controller for the inputs which determine which data are charted.

@@ -1,6 +1,13 @@
 /* Manually add imports here. */
 @import url("chart--world-bank-indices.css");
 
+
+/* Breakpoint hinting mechanism. */
+#breakpointHint {
+  display: none;
+}
+
+
 /* Optional '.charts' container */
 .charts {
     text-align: center;
@@ -8,42 +15,53 @@
 
 .chart-container {
     display: inline-block;
-    text-align: left;
     border: 1px solid #c0c0c0;
 }
 
-/* Aspect ration 3:4 for very narrow viewports */
+.chart-container .chart-controls {
+    text-align: left;
+}
+
+/* Tall and thin */
 .chart-container .chart {
-    width: 300px;
-    height: 400px;
+    width: 320px;
+    height: 500px;
+}
+
+@media (min-width: 480px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 480px;
+    }
+
+    .chart-container .chart {
+        width: 420px;
+    }
+}
+
+@media (min-width: 768px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 768px;
+    }
+
+    .chart-container .chart {
+        width: 700px;
+    }
 }
 
 /* Aspect ration 3:2 */
-@media (min-width: 480px) {
-    .chart-container .chart {
-        width: 400px;
-        height: 267px;
-    }
-}
+@media (min-width: 1024px) {
 
-@media (min-width: 600px) {
-    .chart-container .chart {
-        width: 500px;
-        height: 333px;
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 1024px;
     }
-}
 
-@media (min-width: 800px) {
     .chart-container .chart {
-        width: 600px;
-        height: 400px;
-    }
-}
-
-@media (min-width: 1280px) {
-    .chart-container .chart {
-        width: 750px;
-        height: 500px;
+        width: 900px;
     }
 }
 

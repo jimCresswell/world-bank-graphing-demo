@@ -239,12 +239,6 @@ exports.calculateScales = function() {
 };
 
 
-
-exports.draw = function() {
-    this.drawLegend();
-    this.drawChart();
-};
-
 /**
  * Draw the graph
  * @return {undefined}

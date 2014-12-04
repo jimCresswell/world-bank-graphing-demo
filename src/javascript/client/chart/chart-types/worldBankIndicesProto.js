@@ -297,6 +297,11 @@ exports.drawAxes = function() {
     var xSymbol = indices[chart.accessors.x].symbol;
     var ySymbol = indices[chart.accessors.y].symbol;
 
+    // Request a number of x-axis ticks
+    // according to css breakpoint.
+    var numTicks = this.isWide() ? 8 : 3;
+    xAxisFactory.ticks(numTicks);
+
     xAxisFactory.scale(chart.scales.x);
     xAxisFactory.tickFormat(formatValuesFactory(xSymbol));
 
@@ -435,11 +440,15 @@ exports.resetLegendDimensions = function() {
 };
 
 
+exports.isWide = function() {
+    return parseInt(this.breakpointWidth) >= this.breakPoints.medium;
+};
+
+
 // Calculate the current optimum number
 // of columns for the legend.
 exports.numLegendColumns = function() {
-    var isWide = parseInt(this.breakpointWidth) >= this.breakPoints.medium;
-    return isWide ? 3 : 2;
+    return this.isWide() ? 3 : 2;
 };
 
 

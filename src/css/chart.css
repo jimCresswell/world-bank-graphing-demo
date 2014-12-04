@@ -15,8 +15,11 @@
 
 .chart-container {
     display: inline-block;
-    text-align: left;
     border: 1px solid #c0c0c0;
+}
+
+.chart-container .chart-controls {
+    text-align: left;
 }
 
 /* Tall and thin */

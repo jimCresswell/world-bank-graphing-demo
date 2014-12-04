@@ -36,8 +36,7 @@
     }
 
     .chart-container .chart {
-        width: 400px;
-        height: 600px;
+        width: 420px;
     }
 }
 
@@ -49,8 +48,7 @@
     }
 
     .chart-container .chart {
-        width: 600px;
-        height: 500px;
+        width: 700px;
     }
 }
 
@@ -63,8 +61,7 @@
     }
 
     .chart-container .chart {
-        width: 800px;
-        height: 533px;
+        width: 900px;
     }
 }
 

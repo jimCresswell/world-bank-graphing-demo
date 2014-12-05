@@ -15,7 +15,9 @@
 'use strict';
 
 
-// Imports: TODO: use dependency injection for these.
+// Imports
+// TODO: use dependency injection for these, see
+// https://github.com/jimCresswell/world-bank-graphing-demo/issues/28
 var d3 = require('d3');
 var formatValuesFactory = require('./helpers').formatValuesFactory;
 

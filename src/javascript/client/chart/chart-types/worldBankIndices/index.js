@@ -6,8 +6,10 @@
 var d3 = require('d3');
 var _isNaN = require('lodash.isnan');
 var _compact = require('lodash.compact');
+var _assign = require('lodash.assign');
 
 var typeConfig = require('./config');
+var legend = require('./legend');
 
 
 // Make the chart type specific config
@@ -31,6 +33,9 @@ exports.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
+
+    // Mix in other functionality.
+    _assign(chart, legend);
 };
 
 
@@ -277,12 +282,6 @@ exports.drawChart = function() {
 };
 
 
-exports.drawLegend = function() {
-    this.positionLegend();
-    this.populateLegend();
-};
-
-
 exports.drawAxes = function() {
     var chart = this;
     var indices = chart.data.indices;
@@ -377,118 +376,8 @@ exports.enableDatapointInteractions = function() {
 };
 
 
-// Position the legend on the chart.
-exports.positionLegend = function() {
-    var chart = this;
-    var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
-    var yOffset = 0;
-
-    chart.d3Objects.legend
-        .attr({
-            transform: 'translate(' + xOffset  + ',' + yOffset + ')'
-        });
-};
-
-
-exports.populateLegend = function() {
-    var chart = this;
-    var data = chart.data;
-    var legend = chart.d3Objects.legend;
-    var rectHeight = 17;
-
-    var legendRegions = legend.selectAll('g')
-        .data(data.regions)
-        .enter()
-        .append('g')
-            .classed('legend__item', true);
-
-    chart.positionLegendItems();
-
-    legendRegions.append('rect')
-        .attr({
-            height: rectHeight
-        }).style({
-            fill: function(d) {return chart.scales.regionColour(d);}
-        });
-
-    chart.setLegendRectWidth();
-
-    // TODO: move these text properties to CSS.
-    legendRegions.append('text')
-        .text(function(d) {return (/[^\()]*/.exec(d))[0];})
-        .attr({
-            x: 5,
-            y: rectHeight/1.25
-        });
-};
-
-
-exports.resetLegendDimensions = function() {
-    this.setLegendWidth();
-    this.setLegendRectWidth();
-    this.positionLegendItems();
-};
-
-
 exports.isWide = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
-};
-
-
-// Calculate the current optimum number
-// of columns for the legend.
-exports.numLegendColumns = function() {
-    return this.isWide() ? 3 : 2;
-};
-
-
-exports.setLegendWidth = function() {
-    var chart = this;
-    var singleColumnEms = 12;
-    var numColumns = chart.numLegendColumns();
-
-    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
-};
-
-
-exports.setLegendRectWidth = function() {
-    var chart = this;
-    var numColumns = chart.numLegendColumns();
-    var rectWidth;
-
-    rectWidth = (chart.legendWidth/numColumns) - chart.config.legendItemPadding*(numColumns-1);
-
-    // Set the width on the legend item rectangles.
-    chart.d3Objects.legend.selectAll('.legend__item rect')
-        .attr({
-            width: rectWidth
-        });
-};
-
-
-exports.positionLegendItems = function () {
-    var chart = this;
-    var legendItems = chart.d3Objects.legend.selectAll('.legend__item');
-    var numColumns = chart.numLegendColumns();
-    var maxItemsInColumn = Math.ceil(legendItems.size()/numColumns);
-    var groupXoffset = chart.legendWidth/numColumns;
-    var groupYOffset = 20;
-
-    legendItems
-        .attr({
-            transform: function(d, index) {
-                var column, row, xOffset, yOffset;
-
-                // Wide legend with multi-column layout.
-                column = Math.floor(index/maxItemsInColumn); // 0 .. numColumns-1
-                row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
-
-                xOffset = groupXoffset * column;
-                yOffset = groupYOffset * row;
-
-                return 'translate(' + xOffset + ','+ yOffset + ')';
-            }
-        });
 };
 
 

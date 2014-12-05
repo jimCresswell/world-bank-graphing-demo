@@ -7,30 +7,19 @@ var d3 = require('d3');
 var _isNaN = require('lodash.isnan');
 var _compact = require('lodash.compact');
 
-var cssClass = 'chart--world-bank-indices';
+var typeConfig = require('./config');
 
-// Default Z range in pixels.
-var defaultZRange = [10, 15];
 
-// Colours per region.
-// 9 Colours, contrasting.
-// From http://colorbrewer2.org/
-var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
-
-// Legend configuration.
-// The padding between side by side item groups in the legend in px.
-var legendItemPadding = 10;
-
+// HAHAHAHAH this.zrange = this.zrange || typeConfig.defaultZRange
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
 
-    chart.hasLegend = true;
-    chart.legendItemPadding = legendItemPadding;
+    // Reference the chart type configuration default values.
+    chart.config = typeConfig;
 
-    chart.cssClass = cssClass;
-    d3Svg.classed(cssClass, true);
+    d3Svg.classed(typeConfig.cssClass, true);
 
     // Append the elements of the chart.
     d3Objects.axes = {x:null, y:null};
@@ -203,13 +192,14 @@ exports.deriveCurrentData = function() {
 // Ordinal scales dependent only on the data.
 exports.calculateOrdinalScales = function() {
     var scales = this.scales;
+    var config = this.config;
 
     // Ordinal scale mapping region name to a colour
     // from a range generated with
     // http://colorbrewer2.org/
     scales.regionColour = d3.scale.ordinal()
         .domain(this.data.regions)
-        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
+        .range(config.coloursRange.map(function(colour) {return d3.rgb(colour);}));
 };
 
 
@@ -235,7 +225,7 @@ exports.calculateScales = function() {
 
     scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
-    scales.z.range(this.zRange || defaultZRange);
+    scales.z.range(this.zRange);
 };
 
 
@@ -462,7 +452,7 @@ exports.setLegendRectWidth = function() {
     var numColumns = chart.numLegendColumns();
     var rectWidth;
 
-    rectWidth = (chart.legendWidth/numColumns) - chart.legendItemPadding*(numColumns-1);
+    rectWidth = (chart.legendWidth/numColumns) - chart.config.legendItemPadding*(numColumns-1);
 
     // Set the width on the legend item rectangles.
     chart.d3Objects.legend.selectAll('.legend__item rect')

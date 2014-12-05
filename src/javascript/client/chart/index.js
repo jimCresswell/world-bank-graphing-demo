@@ -25,9 +25,9 @@ function Chart(chartOptions, data) {
     chart.id = chartOptions.id;
     chart.svg = chartOptions.svg;
     chart.defaultAccessors = chartOptions.defaultAccessors;
-    chart.zRange = chartOptions.zRange || false;
+    chart.zRange = chartOptions.zRange || [10, 20];
     chart.accessors = {};
-    chart.hasLegend = false; // Currently overridden in chart type.
+    chart.hasLegend = false; // Overridden in chart type.
     chart.baseFontSize = false;
     chart.legendWidth = 0;
     chart.dimensions = {};

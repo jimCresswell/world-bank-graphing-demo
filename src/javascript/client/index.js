@@ -5,15 +5,27 @@
 
 var throttle = require('lodash.throttle');
 
+var Model = require('./model');
 var Controls = require('./controls');
 var Chart = require('./chart');
+
 var dataService = require('../service/dataService');
 
 var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-region_Data.json';
-var controlOptions = {id: 'indices-controls'};
-var chartOptions = {
-    id: 'chart1-svg',
+
+
+var modelOptions = {
+    chartType: 'worldBankIndices'
+};
+
+var controlOptions = {
     chartType: 'worldBankIndices',
+    id: 'indices-controls'
+};
+
+var chartOptions = {
+    chartType: 'worldBankIndices',
+    id: 'chart1-svg',
     defaultAccessors: {
         x: 'Population, total',
         y: 'Literacy rate, adult total (% of people ages 15 and above)',
@@ -44,25 +56,27 @@ window.addEventListener('load', function onPageLoad() {
  */
 
 function init(data) {
-    var chart;
+    var model;
     var controls;
+    var chart;
 
     chartOptions.svg = document.getElementById(chartOptions.id);
     controlOptions.form = document.getElementById(controlOptions.id);
 
-    // TODO instantiate a DOM event delegate for the chart.
+    model = new Model(modelOptions, data);
+    controls = new Controls(controlOptions, model);
+    chart = new Chart(chartOptions, model);
 
-    controls = new Controls(controlOptions, data);
-    chart = new Chart(chartOptions, data);
+    // TODO bind changes in the controls to the chart update functionality.
 
-    controls.bindToChart(chart);
+    addResizeListener(chart);
+}
 
-    addResizeListener();
 
-    // Call onResize at most once every throttleLimit milliseconds.
-    function addResizeListener() {
-        var throttleLimit = 100;
-        var chartResize = chart.onResize.bind(chart);
-        window.addEventListener('resize', throttle(chartResize, throttleLimit, {trailing: true}));
-    }
+// Call onResize for the specified UI component
+// at most once every <throttleLimit> milliseconds.
+function addResizeListener(component) {
+    var throttleLimit = 100;
+    var onResize = component.onResize.bind(component);
+    window.addEventListener('resize', throttle(onResize, throttleLimit, {trailing: true}));
 }

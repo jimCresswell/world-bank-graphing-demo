@@ -4,9 +4,9 @@
  */
 'use strict';
 
-var assign = require('lodash.assign');
+var _assign = require('lodash.assign');
 
-var chartPrototypes = require('./chart-types');
+var chartPrototypes = require('../chart-types');
 
 module.exports = Chart;
 
@@ -16,29 +16,34 @@ module.exports = Chart;
  * @class
  * @param {object} chartOptions Chart construction options
  *                              id: [required, string] id of svg element to target.
- *                              data: [required, object] the data to chart.
+ *                              model: [required, object] the model for the chart.
  */
-function Chart(chartOptions, data) {
+function Chart(chartOptions, model) {
     var chart = this;
 
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
-        return new Chart(chartOptions, data);
+        return new Chart(chartOptions, model);
     }
 
     if (chartOptions.svg.tagName !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 
-    if (!data) {
-        throw new TypeError('Please suppply data for the chart.');
+    if (!model) {
+        throw new TypeError('Please suppply a model for the chart.');
     }
+
+
+    // Assign the data.
+    chart.data = model.getData();
 
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
-    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
+    _assign(Chart.prototype, chartPrototypes[chartOptions.chartType].chart);
+
 
     // Chart *constructor* prototype properties which can be overriden by chart options.
     Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
@@ -50,7 +55,6 @@ function Chart(chartOptions, data) {
     chart.legendWidth = 0;
     chart.dimensions = {};
     chart.scales = {};
-    chart.data = {};
     chart.d3Objects = {};
 
 
@@ -80,7 +84,6 @@ function Chart(chartOptions, data) {
     }
 
     // Data operations.
-    chart.addRawData(data);
     chart.setAccessors();
     chart.deriveCurrentData();
 
@@ -117,11 +120,6 @@ Chart.prototype.positionChartElements = function() {
 
 Chart.prototype.draw = function() {
     console.warn('Chart.draw has not been overriden with a chart type specific method.');
-};
-
-
-Chart.prototype.addRawData = function() {
-    console.warn('Chart.addRawData has not been overriden with a chart type specific method.');
 };
 
 

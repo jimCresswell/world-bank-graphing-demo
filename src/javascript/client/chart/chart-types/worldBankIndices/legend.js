@@ -2,6 +2,15 @@
  * Legend functionality.
  *
  * To be mixed into the parent chart prototype.
+ *
+ * Tight coupling to chart index.js module
+ *   * this.wide()
+ *   * chart.dimensions
+ *   * chart.d3Objects
+ *   * chart.data
+ *   * chart.scales
+ *   * chart.baseFontSize
+ *   * chart.config
  */
 'use strict';
 
@@ -70,6 +79,7 @@ exports.resetLegendDimensions = function() {
 exports.numLegendColumns = function() {
     return this.isWide() ? 3 : 2;
 };
+
 
 exports.setLegendWidth = function() {
     var chart = this;

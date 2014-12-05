@@ -3,5 +3,5 @@
  */
 
 module.exports = {
-    worldBankIndices: require('./worldBankIndicesProto'),
+    worldBankIndices: require('./worldBankIndices'),
 };

@@ -10,16 +10,20 @@ var _compact = require('lodash.compact');
 var typeConfig = require('./config');
 
 
-// HAHAHAHAH this.zrange = this.zrange || typeConfig.defaultZRange
+// Make the chart type specific config
+// available on the chart prototype
+// before calling this.init() so that the
+// generic chart constructor can use it.
+exports.config = typeConfig;
+
+
+// Chart type specific initialisation tasks.
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
 
-    // Reference the chart type configuration default values.
-    chart.config = typeConfig;
-
-    d3Svg.classed(typeConfig.cssClass, true);
+    d3Svg.classed(chart.config.cssClass, true);
 
     // Append the elements of the chart.
     d3Objects.axes = {x:null, y:null};

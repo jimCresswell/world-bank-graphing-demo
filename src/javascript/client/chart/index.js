@@ -21,19 +21,45 @@ module.exports = Chart;
 function Chart(chartOptions, data) {
     var chart = this;
 
-    // Chart object properties.
-    chart.id = chartOptions.id;
-    chart.svg = chartOptions.svg;
-    chart.defaultAccessors = chartOptions.defaultAccessors;
-    chart.zRange = chartOptions.zRange || [10, 20];
+    // Cope with lack of 'new' keyword.
+    if (!(chart instanceof Chart)){
+        return new Chart(chartOptions, data);
+    }
+
+    if (chartOptions.svg.tagName !== 'svg') {
+        throw new TypeError('Please make sure the supplied id is for an SVG element.');
+    }
+
+    if (!data) {
+        throw new TypeError('Please suppply data for the chart.');
+    }
+
+
+    // Turn this into the appropriate type of Chart object.
+    // Methods in the chart type will override default
+    // Chart object prototype methods.
+    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
+
+    // Chart *constructor* prototype properties overriden by chart options.
+    Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
+
+
+    // Chart object properties expected to exist (just here as a hint).
     chart.accessors = {};
-    chart.hasLegend = false; // Overridden in chart type.
     chart.baseFontSize = false;
     chart.legendWidth = 0;
     chart.dimensions = {};
     chart.scales = {};
     chart.data = {};
     chart.d3Objects = {};
+
+
+    // Chart object properties defined by passed in chart options.
+    chart.id = chartOptions.id;
+    chart.svg = chartOptions.svg;
+    chart.defaultAccessors = chartOptions.defaultAccessors;
+    chart.zRange = chartOptions.zRange || [10, 20];
+
 
     // Expected breakpoint reference.
     // Values are minimum width in px at which media rule applies.
@@ -44,25 +70,8 @@ function Chart(chartOptions, data) {
         'wide': 1024
     };
 
-    // Cope with lack of 'new' keyword.
-    if (!(chart instanceof Chart)){
-        return new Chart(chartOptions, data);
-    }
 
-    if (chart.svg.tagName !== 'svg') {
-        throw new TypeError('Please make sure the supplied id is for an SVG element.');
-    }
-
-    if (!data) {
-        throw new TypeError('Please suppply data for the chart.');
-    }
-
-    // Turn this into the appropriate type of Chart object.
-    // Methods in the chart type will override default
-    // Chart object prototype methods.
-    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
-
-    // Do some setup.
+    // Do some setup as defined by the chart type prototype.
     chart.init();
 
     // Record the initial dimensions of the chart
@@ -76,7 +85,9 @@ function Chart(chartOptions, data) {
     chart.recordbreakpointWidth();
 
     // Depends viewport width and breakpoint.
-    chart.setLegendWidth();
+    if (chart.config.hasLegend) {
+        chart.setLegendWidth();
+    }
 
     // Data operations.
     chart.addRawData(data);
@@ -87,7 +98,9 @@ function Chart(chartOptions, data) {
     chart.calculateOrdinalScales();
 
     // Draw the legend.
-    chart.drawLegend();
+    if (chart.config.hasLegend) {
+        chart.drawLegend();
+    }
 
     // The chart area padding depends on the computed legend dimensions.
     chart.setAreaChartPadding();
@@ -246,7 +259,7 @@ Chart.prototype.onResize = function() {
         this.recordBaseFontsize();
         this.recordbreakpointWidth();
 
-        if (this.hasLegend) {
+        if (this.config.hasLegend) {
             this.resetLegendDimensions();
             this.positionLegend();
         }
@@ -260,6 +273,7 @@ Chart.prototype.onResize = function() {
         this.rescaleDataPoints();
     }
 };
+
 
 
 /* HELPERS */

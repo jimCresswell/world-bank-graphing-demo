@@ -1,5 +1,7 @@
 /**
- * Data service.
+ * Data service module.
+ *
+ * Responsible for retrieving the data.
  */
 'use strict';
 

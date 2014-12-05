@@ -20,7 +20,7 @@ var modelOptions = {
 
 var controlOptions = {
     chartType: 'worldBankIndices',
-    id: 'indices-controls'
+    id: 'chart-controls'
 };
 
 var chartOptions = {
@@ -60,6 +60,7 @@ function init(data) {
     var controls;
     var chart;
 
+    // Store references to key UI elements.
     chartOptions.svg = document.getElementById(chartOptions.id);
     controlOptions.form = document.getElementById(controlOptions.id);
 
@@ -68,6 +69,7 @@ function init(data) {
     chart = new Chart(chartOptions, model);
 
     // TODO bind changes in the controls to the chart update functionality.
+    // Possibly using events?
 
     addResizeListener(chart);
 }

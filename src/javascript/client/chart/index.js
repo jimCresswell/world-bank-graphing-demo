@@ -26,7 +26,7 @@ function Chart(chartOptions, model) {
         return new Chart(chartOptions, model);
     }
 
-    if (chartOptions.svg.tagName !== 'svg') {
+    if (chartOptions.svg.tagName.toLowerCase() !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 

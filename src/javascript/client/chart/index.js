@@ -283,10 +283,7 @@ function getbreakpointWidth() {
         document.body.appendChild(breakpointHintEl);
     }
 
-    var matchingStylesheets = window.getMatchedCSSRules(breakpointHintEl);
-    var lastStyleSheet = matchingStylesheets[matchingStylesheets.length -1].style;
-
-    var breakpointWidth = lastStyleSheet.width;
+    var breakpointWidth = window.getComputedStyle(breakpointHintEl).width;
 
     return breakpointWidth;
 }

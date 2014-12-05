@@ -6,15 +6,27 @@
 
 var throttle = require('lodash.throttle');
 
+var Model = require('./model');
 var Controls = require('./controls');
 var Chart = require('./chart');
-var dataService = require('./dataService');
+
+var dataService = require('../service/dataService');
 
 var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-region_Data.json';
-var controlOptions = {id: 'indices-controls'};
-var chartOptions = {
-    id: 'chart1-svg',
+
+
+var modelOptions = {
+    chartType: 'worldBankIndices'
+};
+
+var controlOptions = {
     chartType: 'worldBankIndices',
+    id: 'chart-controls'
+};
+
+var chartOptions = {
+    chartType: 'worldBankIndices',
+    id: 'chart1-svg',
     defaultAccessors: {
         x: 'Population, total',
         y: 'Literacy rate, adult total (% of people ages 15 and above)',
@@ -45,30 +57,34 @@ window.addEventListener('load', function onPageLoad() {
  */
 
 function init(data) {
-    var chart;
+    var model;
     var controls;
+    var chart;
 
+    // Store references to key UI elements.
     chartOptions.svg = document.getElementById(chartOptions.id);
     controlOptions.form = document.getElementById(controlOptions.id);
 
-    // TODO instantiate a DOM event delegate for the chart.
+    model = new Model(modelOptions, data);
+    controls = new Controls(controlOptions, model);
+    chart = new Chart(chartOptions, model);
 
-    controls = new Controls(controlOptions, data);
-    chart = new Chart(chartOptions, data);
+    // TODO bind changes in the controls to the chart update functionality.
+    // Possibly using events?
 
-    controls.bindToChart(chart);
-
-    addResizeListener();
-
-    // Call onResize at most once every throttleLimit milliseconds.
-    function addResizeListener() {
-        var throttleLimit = 100;
-        var chartResize = chart.onResize.bind(chart);
-        window.addEventListener('resize', throttle(chartResize, throttleLimit, {trailing: true}));
-    }
+    addResizeListener(chart);
 }
 
-},{"./chart":51,"./controls":52,"./dataService":53,"lodash.throttle":34}],2:[function(require,module,exports){
+
+// Call onResize for the specified UI component
+// at most once every <throttleLimit> milliseconds.
+function addResizeListener(component) {
+    var throttleLimit = 100;
+    var onResize = component.onResize.bind(component);
+    window.addEventListener('resize', throttle(onResize, throttleLimit, {trailing: true}));
+}
+
+},{"../service/dataService":59,"./chart":56,"./controls":57,"./model":58,"lodash.throttle":34}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -13892,9 +13908,13 @@ module.exports = function(arr, fn, initial){
  */
 
 module.exports = {
-    worldBankIndices: require('./worldBankIndices'),
+    worldBankIndices: {
+        model: require('./worldBankIndices/model'),
+        controls: require('./worldBankIndices/controls'),
+        chart: require('./worldBankIndices/chart')
+    }
 };
-},{"./worldBankIndices":49}],46:[function(require,module,exports){
+},{"./worldBankIndices/chart":49,"./worldBankIndices/controls":54,"./worldBankIndices/model":55}],46:[function(require,module,exports){
 /**
  * Axes functionality.
  *
@@ -14057,14 +14077,14 @@ exports.formatValuesFactory = function (symbol) {
 'use strict';
 
 var d3 = require('d3');
-var _isNaN = require('lodash.isnan');
-var _compact = require('lodash.compact');
 var _assign = require('lodash.assign');
 
 var typeConfig = require('./config');
+var viewModel = require('./viewModel');
+var scales = require('./scales');
 var legend = require('./legend');
 var axes = require('./axes');
-var formatValuesFactory = require('./helpers').formatValuesFactory;
+var tooltip = require('./tooltip');
 
 
 // Make the chart type specific config
@@ -14090,8 +14110,14 @@ exports.init = function() {
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
 
     // Mix in other functionality.
+    // TODO: make these instantiable so that
+    // 1) They can use dependency injection.
+    // 2) Functionality from a module is explicitly namespaced.
+    _assign(chart, viewModel);
+    _assign(chart, scales);
     _assign(chart, legend);
     _assign(chart, axes);
+    _assign(chart, tooltip);
 };
 
 
@@ -14129,168 +14155,6 @@ exports.positionChartElements = function () {
     // Move the plot area to account for padding on the plot area.
     chart.d3Objects.chartArea
         .attr('transform', 'translate(' + chart.padding.left + ', ' + chart.padding.top + ')');
-};
-
-
-// TODO: move to model or viewmodel.
-exports.addRawData = function(rawData) {
-    var data = this.data = {};
-
-    // rawData[region][index] == [{year:, value:},{year:, value:},...]
-    data.rawData = rawData;
-
-    // Get the geographical regions.
-    var regions = data.regions = Object.keys(rawData);
-
-    // Each region has the same development indices
-    // so no need to loop over regions.
-    var indexKeys = Object.keys(rawData[regions[0]]);
-
-    // Extract information about each index;
-    data.indices = {};
-    indexKeys.forEach(function (indexName) {
-        var descriptor, unit, symbol, matches = [];
-
-        // Some percentages are have a unit
-        // of 'per 100 <something>'.
-        var altPercentageString = 'per 100';
-
-        // descriptor [(unit)]
-        // e.g. GDP growth (annual %)
-        // e.g. Population, total
-        matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
-        descriptor = matches[1];
-        unit = matches[2] || false;
-
-        // Unit can be undefined for an index.
-        // Unit does not have to contain a symbol.
-        if (unit) {
-            matches = unit.match(new RegExp('[%$£]|'+altPercentageString));
-            symbol = matches ? matches[0] : false;
-
-            // Cope with some values being labelled
-            // 'per 100' instead of %.
-            if (symbol === altPercentageString) {
-                symbol = '%';
-            }
-        }
-
-        data.indices[indexName] = {
-            descriptor: descriptor,
-            unit: unit,
-            symbol: symbol
-        };
-    });
-
-    // Each index has the same years
-    // so no need to loop.
-    data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
-};
-
-
-// TODO: move to model or viewmodel.
-/**
- * Set the data accessors for the chart.
- * @param {object} accessors {x:'', y:'', z:''}
- */
-exports.setAccessors = function(accessors) {
-    if (accessors) {
-        this.accessors = accessors;
-        return;
-    }
-    this.accessors = this.defaultAccessors;
-};
-
-
-// TODO: move to model or viewmodel.
-exports.deriveCurrentData = function() {
-    var chart = this;
-    var data = this.data;
-    var year= '2000'; // TODO map over years.
-    var extremes = {
-        minX: undefined,
-        maxX: undefined,
-        minY: undefined,
-        maxY: undefined,
-        minZ: undefined,
-        maxZ: undefined
-    };
-
-    var derivedData = data.regions.map(function(region) {
-        var values = {
-            region: region,
-            x: parseFloat(data.rawData[region][chart.accessors.x][year]),
-            y: parseFloat(data.rawData[region][chart.accessors.y][year]),
-            z: parseFloat(data.rawData[region][chart.accessors.z][year])
-        };
-
-        // If any of the values are missing then skip
-        // this region and year combination.
-        if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
-            return false;
-        }
-
-
-        // Find the extremes over all data.
-        ['min', 'max'].forEach(function(extreme) {
-            ['X', 'Y', 'Z'].forEach(function(dimension) {
-                var currentValue = values[dimension.toLowerCase()];
-                if (extremes[extreme+dimension] === undefined) {
-                    extremes[extreme+dimension] = currentValue;
-                } else {
-                    extremes[extreme+dimension] = Math[extreme](extremes[extreme+dimension], currentValue);
-                }
-            });
-        });
-
-        return values;
-    });
-
-    // Record the derived data with falsey values removed.
-    data.derived = _compact(derivedData);
-
-    // Record the extreme data values.
-    data.extremes = extremes;
-};
-
-
-// Ordinal scales dependent only on the data.
-exports.calculateOrdinalScales = function() {
-    var scales = this.scales;
-    var config = this.config;
-
-    // Ordinal scale mapping region name to a colour
-    // from a range generated with
-    // http://colorbrewer2.org/
-    scales.regionColour = d3.scale.ordinal()
-        .domain(this.data.regions)
-        .range(config.coloursRange.map(function(colour) {return d3.rgb(colour);}));
-};
-
-
-// Dimensional scales dependent on the viewport dimensions.
-exports.calculateScales = function() {
-    var extremes = this.data.extremes;
-    var scales = this.scales;
-    var chartDimensions = this.dimensions;
-    var padding = this.padding;
-
-    // Linear scales the three data accessors
-    // where the Z accessor is mapped to the
-    // radius of the datapoint.
-    ['X', 'Y', 'Z'].forEach(function(dimension) {
-        scales[dimension.toLowerCase()] = d3.scale
-            .linear()
-            .domain([
-                extremes['min'+dimension] * 0.95,
-                extremes['max'+dimension]
-            ])
-            .nice();
-    });
-
-    scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
-    scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
-    scales.z.range(this.zRange);
 };
 
 
@@ -14392,92 +14256,7 @@ exports.rescaleDataPoints = function() {
         });
 };
 
-
-/**
- * Given a node append a tooltip to it.
- *
- * Note: can't append node after setting content
- * because the content relies on the inherited
- * data from the parent node and because the
- * getBoundingClientRect method requires
- * the element to be in the DOM.
- *
- * @param  {DOMNode} node
- * @return {undefined}
- */
-exports.appendTooltip = function(node) {
-    var chart = this;
-    var datapoint = d3.select(node);
-    var tooltip = datapoint.append('g');
-
-    tooltip
-        .classed('tooltip', true);
-
-
-    // Calculate the offset directions for
-    // tooltips according to which chart
-    // quadrant the datapoint is in.
-    // The default tooltip offset (in the
-    // top left quadrant) is down and to
-    // the right.
-    var xOffsetSign = 1;
-    var yOffsetSign = 1;
-    var textAnchor = 'start';
-    var plotWidth = chart.dimensions.width - chart.padding.left - chart.padding.right;
-    var plotHeight = chart.dimensions.height - chart.padding.top - chart.padding.bottom;
-    var translate = d3.transform(datapoint.attr('transform')).translate;
-    var xTranslate = translate[0];
-    var yTranslate = translate[1];
-    if (xTranslate >= plotWidth/2) {
-        xOffsetSign = -1;
-        textAnchor = 'end';
-    }
-    if (yTranslate >= plotHeight/2) {
-        yOffsetSign = -1;
-    }
-
-    // Append the region tooltip content.
-    tooltip.append('text')
-        .text(function(d) {return d.region;});
-
-    // Append the indices descriptors and values content
-    // with a vertical offset.
-    ['x','y','z'].forEach(function(dimension, i) {
-        var indexObject = chart.data.indices[chart.accessors[dimension]];
-        var descriptor = indexObject.descriptor;
-        var formatter = formatValuesFactory(indexObject.symbol);
-        tooltip.append('text')
-            .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
-            .attr({
-               y: 20*(i+1)
-            });
-    });
-
-    // Position the tooltip according to
-    // its offset directions.
-    tooltip
-        .attr('transform', function(d) {
-            var circleRadius = chart.scales.z(d.z);
-
-            // Default, move the tooltip down a bit.
-            var yOffset = yOffsetSign * circleRadius * 0.5;
-
-            // Move the tooltip up.
-            if (yOffsetSign === -1) {
-                yOffset = yOffsetSign * (tooltip.node().getBoundingClientRect().height - circleRadius);
-            }
-
-            // Horizontal displacement, acts together with
-            // text-anchor: start/end.
-            // Offset by circle radius plus a constant.
-            var xOffset = xOffsetSign * (circleRadius + 4);
-
-            return 'translate(' + xOffset + ',' + yOffset + ')';
-        })
-        .style({'text-anchor': textAnchor});
-};
-
-},{"./axes":46,"./config":47,"./helpers":48,"./legend":50,"d3":3,"lodash.assign":4,"lodash.compact":31,"lodash.isnan":32}],50:[function(require,module,exports){
+},{"./axes":46,"./config":47,"./legend":50,"./scales":51,"./tooltip":52,"./viewModel":53,"d3":3,"lodash.assign":4}],50:[function(require,module,exports){
 /**
  * Legend functionality.
  *
@@ -14612,14 +14391,316 @@ exports.positionLegendItems = function () {
 
 },{}],51:[function(require,module,exports){
 /**
+ * Scales functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ */
+'use strict';
+
+var d3 = require('d3');
+
+
+// Ordinal scales dependent only on the data.
+exports.calculateOrdinalScales = function() {
+    var scales = this.scales;
+    var config = this.config;
+
+    // Ordinal scale mapping region name to a colour
+    // from a range generated with
+    // http://colorbrewer2.org/
+    scales.regionColour = d3.scale.ordinal()
+        .domain(this.data.regions)
+        .range(config.coloursRange.map(function(colour) {return d3.rgb(colour);}));
+};
+
+
+// Dimensional scales dependent on the viewport dimensions.
+exports.calculateScales = function() {
+    var extremes = this.data.extremes;
+    var scales = this.scales;
+    var chartDimensions = this.dimensions;
+    var padding = this.padding;
+
+    // Linear scales the three data accessors
+    // where the Z accessor is mapped to the
+    // radius of the datapoint.
+    ['X', 'Y', 'Z'].forEach(function(dimension) {
+        scales[dimension.toLowerCase()] = d3.scale
+            .linear()
+            .domain([
+                extremes['min'+dimension] * 0.95,
+                extremes['max'+dimension]
+            ])
+            .nice();
+    });
+
+    scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
+    scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
+    scales.z.range(this.zRange);
+};
+},{"d3":3}],52:[function(require,module,exports){
+/**
+ * Tooltip functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ */
+'use strict';
+
+var d3 = require('d3');
+var formatValuesFactory = require('./helpers').formatValuesFactory;
+
+/**
+ * Given a node append a tooltip to it.
+ *
+ * Note: can't append node after setting content
+ * because the content relies on the inherited
+ * data from the parent node and because the
+ * getBoundingClientRect method requires
+ * the element to be in the DOM.
+ *
+ * @param  {DOMNode} node
+ * @return {undefined}
+ */
+exports.appendTooltip = function(node) {
+    var chart = this;
+    var datapoint = d3.select(node);
+    var tooltip = datapoint.append('g');
+
+    tooltip
+        .classed('tooltip', true);
+
+
+    // Calculate the offset directions for
+    // tooltips according to which chart
+    // quadrant the datapoint is in.
+    // The default tooltip offset (in the
+    // top left quadrant) is down and to
+    // the right.
+    var xOffsetSign = 1;
+    var yOffsetSign = 1;
+    var textAnchor = 'start';
+    var plotWidth = chart.dimensions.width - chart.padding.left - chart.padding.right;
+    var plotHeight = chart.dimensions.height - chart.padding.top - chart.padding.bottom;
+    var translate = d3.transform(datapoint.attr('transform')).translate;
+    var xTranslate = translate[0];
+    var yTranslate = translate[1];
+    if (xTranslate >= plotWidth/2) {
+        xOffsetSign = -1;
+        textAnchor = 'end';
+    }
+    if (yTranslate >= plotHeight/2) {
+        yOffsetSign = -1;
+    }
+
+    // Append the region tooltip content.
+    tooltip.append('text')
+        .text(function(d) {return d.region;});
+
+    // Append the indices descriptors and values content
+    // with a vertical offset.
+    ['x','y','z'].forEach(function(dimension, i) {
+        var indexObject = chart.data.indices[chart.accessors[dimension]];
+        var descriptor = indexObject.descriptor;
+        var formatter = formatValuesFactory(indexObject.symbol);
+        tooltip.append('text')
+            .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
+            .attr({
+               y: 20*(i+1)
+            });
+    });
+
+    // Position the tooltip according to
+    // its offset directions.
+    tooltip
+        .attr('transform', function(d) {
+            var circleRadius = chart.scales.z(d.z);
+
+            // Default, move the tooltip down a bit.
+            var yOffset = yOffsetSign * circleRadius * 0.5;
+
+            // Move the tooltip up.
+            if (yOffsetSign === -1) {
+                yOffset = yOffsetSign * (tooltip.node().getBoundingClientRect().height - circleRadius);
+            }
+
+            // Horizontal displacement, acts together with
+            // text-anchor: start/end.
+            // Offset by circle radius plus a constant.
+            var xOffset = xOffsetSign * (circleRadius + 4);
+
+            return 'translate(' + xOffset + ',' + yOffset + ')';
+        })
+        .style({'text-anchor': textAnchor});
+};
+},{"./helpers":48,"d3":3}],53:[function(require,module,exports){
+/**
+ * Chart specific model functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ *
+ */
+'use strict';
+
+var _isNaN = require('lodash.isnan');
+var _compact = require('lodash.compact');
+
+
+/**
+ * Set the data accessors for the chart.
+ * @param {object} accessors {x:'', y:'', z:''}
+ */
+exports.setAccessors = function(accessors) {
+    if (accessors) {
+        this.accessors = accessors;
+        return;
+    }
+    this.accessors = this.defaultAccessors;
+};
+
+
+exports.deriveCurrentData = function() {
+    var chart = this;
+    var data = this.data;
+    var year= '2000'; // TODO map over years.
+    var extremes = {
+        minX: undefined,
+        maxX: undefined,
+        minY: undefined,
+        maxY: undefined,
+        minZ: undefined,
+        maxZ: undefined
+    };
+
+    var derivedData = data.regions.map(function(region) {
+        var values = {
+            region: region,
+            x: parseFloat(data.rawData[region][chart.accessors.x][year]),
+            y: parseFloat(data.rawData[region][chart.accessors.y][year]),
+            z: parseFloat(data.rawData[region][chart.accessors.z][year])
+        };
+
+        // If any of the values are missing then skip
+        // this region and year combination.
+        if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
+            return false;
+        }
+
+
+        // Find the extremes over all data.
+        ['min', 'max'].forEach(function(extreme) {
+            ['X', 'Y', 'Z'].forEach(function(dimension) {
+                var currentValue = values[dimension.toLowerCase()];
+                if (extremes[extreme+dimension] === undefined) {
+                    extremes[extreme+dimension] = currentValue;
+                } else {
+                    extremes[extreme+dimension] = Math[extreme](extremes[extreme+dimension], currentValue);
+                }
+            });
+        });
+
+        return values;
+    });
+
+    // Record the derived data with falsey values removed.
+    data.derived = _compact(derivedData);
+
+    // Record the extreme data values.
+    data.extremes = extremes;
+};
+
+},{"lodash.compact":31,"lodash.isnan":32}],54:[function(require,module,exports){
+/**
+ * Chart type sepecific controls logic.
+ *
+ * To be mixed in to the generic controls prototype.
+ */
+'use strict';
+
+// require d3
+
+/**
+ * Populate the UI controls with appropriate data.
+ * @param  {object} data The chart data.
+ * @return {undefined}
+ */
+exports.populate = function(data) {
+    console.warn('implement me');
+};
+
+// on change function updateAccessors
+// on change function updateYear
+},{}],55:[function(require,module,exports){
+/**
+ * Chart type sepecific model logic.
+ *
+ * To be mixed in to the generic model prototype.
+ */
+'use strict';
+
+exports.addRawData = function(rawData) {
+    var data = this.data = {};
+
+    // rawData[region][index] == [{year:, value:},{year:, value:},...]
+    data.rawData = rawData;
+
+    // Get the geographical regions.
+    var regions = data.regions = Object.keys(rawData);
+
+    // Each region has the same development indices
+    // so no need to loop over regions.
+    var indexKeys = Object.keys(rawData[regions[0]]);
+
+    // Extract information about each index;
+    data.indices = {};
+    indexKeys.forEach(function (indexName) {
+        var descriptor, unit, symbol, matches = [];
+
+        // Some percentages are have a unit
+        // of 'per 100 <something>'.
+        var altPercentageString = 'per 100';
+
+        // descriptor [(unit)]
+        // e.g. GDP growth (annual %)
+        // e.g. Population, total
+        matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
+        descriptor = matches[1];
+        unit = matches[2] || false;
+
+        // Unit can be undefined for an index.
+        // Unit does not have to contain a symbol.
+        if (unit) {
+            matches = unit.match(new RegExp('[%$£]|'+altPercentageString));
+            symbol = matches ? matches[0] : false;
+
+            // Cope with some values being labelled
+            // 'per 100' instead of %.
+            if (symbol === altPercentageString) {
+                symbol = '%';
+            }
+        }
+
+        data.indices[indexName] = {
+            descriptor: descriptor,
+            unit: unit,
+            symbol: symbol
+        };
+    });
+
+    // Each index has the same years
+    // so no need to loop.
+    data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
+};
+
+},{}],56:[function(require,module,exports){
+/**
  * Chart module initialisation, housekeeping, event listeners.
  *
  */
 'use strict';
 
-var assign = require('lodash.assign');
+var _assign = require('lodash.assign');
 
-var chartPrototypes = require('./chart-types');
+var chartPrototypes = require('../chart-types');
 
 module.exports = Chart;
 
@@ -14629,29 +14710,34 @@ module.exports = Chart;
  * @class
  * @param {object} chartOptions Chart construction options
  *                              id: [required, string] id of svg element to target.
- *                              data: [required, object] the data to chart.
+ *                              model: [required, object] the model for the chart.
  */
-function Chart(chartOptions, data) {
+function Chart(chartOptions, model) {
     var chart = this;
 
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
-        return new Chart(chartOptions, data);
+        return new Chart(chartOptions, model);
     }
 
-    if (chartOptions.svg.tagName !== 'svg') {
+    if (chartOptions.svg.tagName.toLowerCase() !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 
-    if (!data) {
-        throw new TypeError('Please suppply data for the chart.');
+    if (!model) {
+        throw new TypeError('Please suppply a model for the chart.');
     }
+
+
+    // Assign the data.
+    chart.data = model.getData();
 
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
-    assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
+    _assign(Chart.prototype, chartPrototypes[chartOptions.chartType].chart);
+
 
     // Chart *constructor* prototype properties which can be overriden by chart options.
     Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
@@ -14663,7 +14749,6 @@ function Chart(chartOptions, data) {
     chart.legendWidth = 0;
     chart.dimensions = {};
     chart.scales = {};
-    chart.data = {};
     chart.d3Objects = {};
 
 
@@ -14693,7 +14778,6 @@ function Chart(chartOptions, data) {
     }
 
     // Data operations.
-    chart.addRawData(data);
     chart.setAccessors();
     chart.deriveCurrentData();
 
@@ -14730,11 +14814,6 @@ Chart.prototype.positionChartElements = function() {
 
 Chart.prototype.draw = function() {
     console.warn('Chart.draw has not been overriden with a chart type specific method.');
-};
-
-
-Chart.prototype.addRawData = function() {
-    console.warn('Chart.addRawData has not been overriden with a chart type specific method.');
 };
 
 
@@ -14904,56 +14983,105 @@ function getbreakpointWidth() {
 
     return breakpointWidth;
 }
-},{"./chart-types":45,"lodash.assign":4}],52:[function(require,module,exports){
+},{"../chart-types":45,"lodash.assign":4}],57:[function(require,module,exports){
 /**
- * Controller for the inputs which determine which data are charted.
+ * The shared model.
  */
 'use strict';
 
+var _assign = require('lodash.assign');
+
+// TODO require events ?
+
+var chartPrototypes = require('../chart-types');
+
 module.exports = Controls;
 
-function Controls(controlsOptions, data) {
+
+function Controls(controlOptions, model) {
     var controls = this;
-    controls.id = '';
-    controls.form = null;
 
     // Cope with lack of 'new' keyword.
     if (!(controls instanceof Controls)){
-        return new Controls(controlsOptions, data);
+        return new Controls(controlOptions, model);
+    }
+
+    if (controlOptions.form.tagName.toLowerCase() !== 'form') {
+        throw new TypeError('Please make sure the supplied id is for an form element.');
+    }
+
+    if (!model) {
+        throw new TypeError('Please suppply a model for the controls.');
+    }
+
+    controls.id = controlOptions.id;
+    controls.form = controlOptions.form;
+
+    // Turn this into the appropriate type of Chart object.
+    // Methods in the chart type will override default
+    // Chart object prototype methods.
+    _assign(Controls.prototype, chartPrototypes[controlOptions.chartType].controls);
+
+    controls.populate(model.getData());
+
+    // TODO, some sort of generic 'controls updated' function
+    // that the specific implementation can call and which
+    // fires the event?
+}
+
+
+Controls.prototype.populate = function() {
+    console.warn('Controls.populate has not been overriden with a chart type specific method.');
+};
+},{"../chart-types":45,"lodash.assign":4}],58:[function(require,module,exports){
+/**
+ * The shared model.
+ */
+'use strict';
+
+var _assign = require('lodash.assign');
+
+var chartPrototypes = require('../chart-types');
+
+module.exports = Model;
+
+
+function Model(modelOptions, data) {
+    var model = this;
+
+    // Cope with lack of 'new' keyword.
+    if (!(model instanceof Model)){
+        return new Model(modelOptions, data);
     }
 
     if (!data) {
-        throw new TypeError('Please suppply data for the controls.');
+        throw new TypeError('Please suppply data for the model.');
     }
 
-    controls.populate(data);
+    // Turn this into the appropriate type of Chart object.
+    // Methods in the chart type will override default
+    // Chart object prototype methods.
+    _assign(Model.prototype, chartPrototypes[modelOptions.chartType].model);
+
+    model.addRawData(data);
 }
 
-Controls.prototype.populate = function(data) {
-    console.warn('populate not implemented.');
+
+// Can be overriden in the chart-type specific model methods.
+Model.prototype.addRawData = function(data) {
+    this.data = data;
 };
 
 
-/**
- * Bind updates on the controls to a method on the chart object
- * to update the chart x and y accessors and cause a redraw.
- *
- * Could do this via pub-sub but I think
- * tight coupling is okay in this case.
- *
- * @param  {object} chart A Chart object.
- * @return {undefined}
- */
-Controls.prototype.bindToChart = function(chart) {
-    console.warn('bindToChart not implemented.');
-
-    // TODO: call a function on the chart to
-    // update the x and y accessors and
-    // cause a redraw.
+Model.prototype.getData = function() {
+    return this.data;
 };
-},{}],53:[function(require,module,exports){
+
+},{"../chart-types":45,"lodash.assign":4}],59:[function(require,module,exports){
 /**
- * Data service.
+ * Data service module.
+ *
+ * Responsible for retrieving the data.
  */
 'use strict';
 

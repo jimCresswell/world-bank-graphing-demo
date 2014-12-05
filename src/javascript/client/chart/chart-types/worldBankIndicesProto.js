@@ -419,16 +419,12 @@ exports.populateLegend = function() {
 
     chart.setLegendRectWidth();
 
+    // TODO: move these text properties to CSS.
     legendRegions.append('text')
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
             x: 5,
-            y: rectHeight/1.25,
-            'text-rendering': 'optimizeLegibility'
-        })
-        .style({
-            'font-size': '0.8em',
-            'font-weight': 900
+            y: rectHeight/1.25
         });
 };
 

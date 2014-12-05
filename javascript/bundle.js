@@ -68,7 +68,7 @@ function init(data) {
     }
 }
 
-},{"./chart":47,"./controls":48,"./dataService":49,"lodash.throttle":34}],2:[function(require,module,exports){
+},{"./chart":51,"./controls":52,"./dataService":53,"lodash.throttle":34}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -13892,9 +13892,165 @@ module.exports = function(arr, fn, initial){
  */
 
 module.exports = {
-    worldBankIndices: require('./worldBankIndicesProto'),
+    worldBankIndices: require('./worldBankIndices'),
 };
-},{"./worldBankIndicesProto":46}],46:[function(require,module,exports){
+},{"./worldBankIndices":49}],46:[function(require,module,exports){
+/**
+ * Axes functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ *
+ * Tight coupling to chart index.js module
+ *   * this.isWide()
+ *   * chart.data
+ *   * chart.accessors
+ *   * chart.scales
+ *   * chart.d3Objects
+ *   * chart.dimensions
+ *   * chart.padding
+ */
+'use strict';
+
+
+// Imports
+// TODO: use dependency injection for these, see
+// https://github.com/jimCresswell/world-bank-graphing-demo/issues/28
+var d3 = require('d3');
+var formatValuesFactory = require('./helpers').formatValuesFactory;
+
+
+exports.drawAxes = function() {
+    var chart = this;
+    var indices = chart.data.indices;
+    var xAxisFactory = d3.svg.axis();
+    var yAxisFactory = d3.svg.axis();
+    var xSymbol = indices[chart.accessors.x].symbol;
+    var ySymbol = indices[chart.accessors.y].symbol;
+
+    // Request a number of x-axis ticks
+    // according to css breakpoint.
+    var numTicks = this.isWide() ? 8 : 3;
+    xAxisFactory.ticks(numTicks);
+
+    xAxisFactory.scale(chart.scales.x);
+    xAxisFactory.tickFormat(formatValuesFactory(xSymbol));
+
+    yAxisFactory.scale(chart.scales.y);
+    yAxisFactory.tickFormat(formatValuesFactory(ySymbol));
+    yAxisFactory.orient('left');
+
+    // Append the axes.
+    chart.d3Objects.axes.x.call(xAxisFactory);
+    chart.d3Objects.axes.y.call(yAxisFactory);
+};
+
+
+exports.labelAxes = function() {
+    var chart = this;
+    var data = chart.data;
+
+    var xLabel = chart.d3Objects.axes.x
+        .append('g')
+        .classed('label xAxis__label', true);
+
+    var xAccessor = chart.accessors.x;
+    xLabel
+        .append('text')
+        .text(data.indices[xAccessor].descriptor);
+    xLabel
+        .append('title')
+        .text(xAccessor);
+
+    var yLabel = chart.d3Objects.axes.y
+        .append('g')
+        .classed('label yAxis__label', true);
+
+    var yAccessor = chart.accessors.y;
+    yLabel
+        .append('text')
+        .text(data.indices[yAccessor].descriptor);
+    yLabel
+        .append('title')
+        .text(yAccessor);
+};
+
+
+exports.positionAxesLabels = function() {
+    var chart = this;
+
+    // Calculated values are dynamic centering of labels, hardcoded values are spacing away from axes.
+    chart.d3Objects.axes.x.select('.label')
+        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 45)'})
+        .style({'text-anchor': 'middle'});
+
+    // The rotation means the first coordinate in the translate is effectively y, second x.
+    chart.d3Objects.axes.y.select('.label')
+        .attr({transform: 'rotate(-90) translate(' + -(chart.dimensions.height-chart.padding.top-chart.padding.bottom)/2 + ', -50)'})
+        .style({'text-anchor': 'middle'});
+};
+
+},{"./helpers":48,"d3":3}],47:[function(require,module,exports){
+/**
+ * Static default configuration for the World Bank indices chart.
+ */
+
+'use strict';
+
+module.exports = {
+    cssClass: 'chart--world-bank-indices',
+
+    // Colours per region.
+    // 9 Colours, contrasting.
+    // From http://colorbrewer2.org/
+    coloursRange: ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'],
+
+    // Legend configuration.
+    // The padding between side by side item groups in the legend in px.
+    legendItemPadding: 10,
+
+    hasLegend: true,
+
+    // Expected breakpoint reference.
+    // Values are minimum width in px at which media rule applies.
+    breakPoints: {
+        'verynarrow': 0,
+        'narrow': 480,
+        'medium': 768,
+        'wide': 1024
+    }
+};
+},{}],48:[function(require,module,exports){
+/**
+ * Chart helper functions.
+ */
+'use strict';
+
+
+// Imports: TODO: use dependency injection for these.
+var d3 = require('d3');
+
+
+/**
+ * Given a unit symbol return a function
+ * to suitably format the values of the
+ * axis ticks.
+ * @param  {[string} symbol
+ * @return {function} string formatting function.
+ */
+exports.formatValuesFactory = function (symbol) {
+    return function (d) {
+        switch (symbol) {
+            case '%':
+                return d3.format(',f')(d) + symbol;
+            case '$':
+            case '£':
+                return symbol + d3.format(',s')(d);
+            default:
+                return d3.format(',.2s')(d);
+        }
+    };
+};
+},{"d3":3}],49:[function(require,module,exports){
 /**
  * World Bank Indices chart prototype.
  */
@@ -13903,38 +14059,39 @@ module.exports = {
 var d3 = require('d3');
 var _isNaN = require('lodash.isnan');
 var _compact = require('lodash.compact');
+var _assign = require('lodash.assign');
 
-var cssClass = 'chart--world-bank-indices';
+var typeConfig = require('./config');
+var legend = require('./legend');
+var axes = require('./axes');
+var formatValuesFactory = require('./helpers').formatValuesFactory;
 
-// Default Z range in pixels.
-var defaultZRange = [10, 15];
 
-// Colours per region.
-// 9 Colours, contrasting.
-// From http://colorbrewer2.org/
-var coloursRange = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)'];
+// Make the chart type specific config
+// available on the chart prototype
+// before calling this.init() so that the
+// generic chart constructor can use it.
+exports.config = typeConfig;
 
-// Legend configuration.
-// The padding between side by side item groups in the legend in px.
-var legendItemPadding = 10;
 
+// Chart type specific initialisation tasks.
 exports.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
 
-    chart.hasLegend = true;
-    chart.legendItemPadding = legendItemPadding;
-
-    chart.cssClass = cssClass;
-    d3Svg.classed(cssClass, true);
+    d3Svg.classed(chart.config.cssClass, true);
 
     // Append the elements of the chart.
-    d3Objects.axes = {x:null, y:null};
+    d3Objects.axes = {};
     d3Objects.axes.x = d3Svg.append('g').classed('axis x-axis', true);
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
+
+    // Mix in other functionality.
+    _assign(chart, legend);
+    _assign(chart, axes);
 };
 
 
@@ -14100,13 +14257,14 @@ exports.deriveCurrentData = function() {
 // Ordinal scales dependent only on the data.
 exports.calculateOrdinalScales = function() {
     var scales = this.scales;
+    var config = this.config;
 
     // Ordinal scale mapping region name to a colour
     // from a range generated with
     // http://colorbrewer2.org/
     scales.regionColour = d3.scale.ordinal()
         .domain(this.data.regions)
-        .range(coloursRange.map(function(colour) {return d3.rgb(colour);}));
+        .range(config.coloursRange.map(function(colour) {return d3.rgb(colour);}));
 };
 
 
@@ -14132,7 +14290,7 @@ exports.calculateScales = function() {
 
     scales.x.range([0, chartDimensions.width - padding.left - padding.right]);
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
-    scales.z.range(this.zRange || defaultZRange);
+    scales.z.range(this.zRange);
 };
 
 
@@ -14180,83 +14338,6 @@ exports.drawChart = function() {
 };
 
 
-exports.drawLegend = function() {
-    this.positionLegend();
-    this.populateLegend();
-};
-
-
-exports.drawAxes = function() {
-    var chart = this;
-    var indices = chart.data.indices;
-    var xAxisFactory = d3.svg.axis();
-    var yAxisFactory = d3.svg.axis();
-    var xSymbol = indices[chart.accessors.x].symbol;
-    var ySymbol = indices[chart.accessors.y].symbol;
-
-    // Request a number of x-axis ticks
-    // according to css breakpoint.
-    var numTicks = this.isWide() ? 8 : 3;
-    xAxisFactory.ticks(numTicks);
-
-    xAxisFactory.scale(chart.scales.x);
-    xAxisFactory.tickFormat(formatValuesFactory(xSymbol));
-
-    yAxisFactory.scale(chart.scales.y);
-    yAxisFactory.tickFormat(formatValuesFactory(ySymbol));
-    yAxisFactory.orient('left');
-
-    // Append the axes.
-    chart.d3Objects.axes.x.call(xAxisFactory);
-    chart.d3Objects.axes.y.call(yAxisFactory);
-};
-
-
-exports.labelAxes = function() {
-    var chart = this;
-    var data = chart.data;
-
-    var xLabel = chart.d3Objects.axes.x
-        .append('g')
-        .classed('label xAxis__label', true);
-
-    var xAccessor = chart.accessors.x;
-    xLabel
-        .append('text')
-        .text(data.indices[xAccessor].descriptor);
-    xLabel
-        .append('title')
-        .text(xAccessor);
-
-    var yLabel = chart.d3Objects.axes.y
-        .append('g')
-        .classed('label yAxis__label', true);
-
-    var yAccessor = chart.accessors.y;
-    yLabel
-        .append('text')
-        .text(data.indices[yAccessor].descriptor);
-    yLabel
-        .append('title')
-        .text(yAccessor);
-};
-
-
-exports.positionAxesLabels = function() {
-    var chart = this;
-
-    // Calculated values are dynamic centering of labels, hardcoded values are spacing away from axes.
-    chart.d3Objects.axes.x.select('.label')
-        .attr({transform: 'translate(' + (chart.dimensions.width-chart.padding.left-chart.padding.right)/2 + ', 45)'})
-        .style({'text-anchor': 'middle'});
-
-    // The rotation means the first coordinate in the translate is effectively y, second x.
-    chart.d3Objects.axes.y.select('.label')
-        .attr({transform: 'rotate(-90) translate(' + -(chart.dimensions.height-chart.padding.top-chart.padding.bottom)/2 + ', -50)'})
-        .style({'text-anchor': 'middle'});
-};
-
-
 exports.enableDatapointInteractions = function() {
     var chart = this;
     var dataPoints = chart.d3Objects.dataPoints;
@@ -14280,122 +14361,8 @@ exports.enableDatapointInteractions = function() {
 };
 
 
-// Position the legend on the chart.
-exports.positionLegend = function() {
-    var chart = this;
-    var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
-    var yOffset = 0;
-
-    chart.d3Objects.legend
-        .attr({
-            transform: 'translate(' + xOffset  + ',' + yOffset + ')'
-        });
-};
-
-
-exports.populateLegend = function() {
-    var chart = this;
-    var data = chart.data;
-    var legend = chart.d3Objects.legend;
-    var rectHeight = 17;
-
-    var legendRegions = legend.selectAll('g')
-        .data(data.regions)
-        .enter()
-        .append('g')
-            .classed('legend__item', true);
-
-    chart.positionLegendItems();
-
-    legendRegions.append('rect')
-        .attr({
-            height: rectHeight
-        }).style({
-            fill: function(d) {return chart.scales.regionColour(d);}
-        });
-
-    chart.setLegendRectWidth();
-
-    legendRegions.append('text')
-        .text(function(d) {return (/[^\()]*/.exec(d))[0];})
-        .attr({
-            x: 5,
-            y: rectHeight/1.25,
-            'text-rendering': 'optimizeLegibility'
-        })
-        .style({
-            'font-size': '0.8em',
-            'font-weight': 900
-        });
-};
-
-
-exports.resetLegendDimensions = function() {
-    this.setLegendWidth();
-    this.setLegendRectWidth();
-    this.positionLegendItems();
-};
-
-
 exports.isWide = function() {
-    return parseInt(this.breakpointWidth) >= this.breakPoints.medium;
-};
-
-
-// Calculate the current optimum number
-// of columns for the legend.
-exports.numLegendColumns = function() {
-    return this.isWide() ? 3 : 2;
-};
-
-
-exports.setLegendWidth = function() {
-    var chart = this;
-    var singleColumnEms = 12;
-    var numColumns = chart.numLegendColumns();
-
-    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
-};
-
-
-exports.setLegendRectWidth = function() {
-    var chart = this;
-    var numColumns = chart.numLegendColumns();
-    var rectWidth;
-
-    rectWidth = (chart.legendWidth/numColumns) - chart.legendItemPadding*(numColumns-1);
-
-    // Set the width on the legend item rectangles.
-    chart.d3Objects.legend.selectAll('.legend__item rect')
-        .attr({
-            width: rectWidth
-        });
-};
-
-
-exports.positionLegendItems = function () {
-    var chart = this;
-    var legendItems = chart.d3Objects.legend.selectAll('.legend__item');
-    var numColumns = chart.numLegendColumns();
-    var maxItemsInColumn = Math.ceil(legendItems.size()/numColumns);
-    var groupXoffset = chart.legendWidth/numColumns;
-    var groupYOffset = 20;
-
-    legendItems
-        .attr({
-            transform: function(d, index) {
-                var column, row, xOffset, yOffset;
-
-                // Wide legend with multi-column layout.
-                column = Math.floor(index/maxItemsInColumn); // 0 .. numColumns-1
-                row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
-
-                xOffset = groupXoffset * column;
-                yOffset = groupYOffset * row;
-
-                return 'translate(' + xOffset + ','+ yOffset + ')';
-            }
-        });
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
 
@@ -14510,35 +14477,140 @@ exports.appendTooltip = function(node) {
         .style({'text-anchor': textAnchor});
 };
 
-
-
+},{"./axes":46,"./config":47,"./helpers":48,"./legend":50,"d3":3,"lodash.assign":4,"lodash.compact":31,"lodash.isnan":32}],50:[function(require,module,exports){
 /**
- * Helpers
+ * Legend functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ *
+ * Tight coupling to chart index.js module
+ *   * this.wide()
+ *   * chart.dimensions
+ *   * chart.d3Objects
+ *   * chart.data
+ *   * chart.scales
+ *   * chart.baseFontSize
+ *   * chart.config
  */
+'use strict';
 
 
- /**
-  * Given a unit symbol return a function
-  * to suitably format the values of the
-  * axis ticks.
-  * @param  {[string} symbol
-  * @return {function} string formatting function.
-  */
- function formatValuesFactory(symbol) {
-     return function (d) {
-         switch (symbol) {
-             case '%':
-                 return d3.format(',f')(d) + symbol;
-             case '$':
-             case '£':
-                 return symbol + d3.format(',s')(d);
-             default:
-                 return d3.format(',.2s')(d);
-         }
-     };
- }
+exports.drawLegend = function() {
+    this.positionLegend();
+    this.populateLegend();
+};
 
-},{"d3":3,"lodash.compact":31,"lodash.isnan":32}],47:[function(require,module,exports){
+
+// Position the legend on the chart.
+exports.positionLegend = function() {
+    var chart = this;
+    var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
+    var yOffset = 0;
+
+    chart.d3Objects.legend
+        .attr({
+            transform: 'translate(' + xOffset  + ',' + yOffset + ')'
+        });
+};
+
+
+exports.populateLegend = function() {
+    var chart = this;
+    var data = chart.data;
+    var legend = chart.d3Objects.legend;
+    var rectHeight = 17;
+
+    var legendRegions = legend.selectAll('g')
+        .data(data.regions)
+        .enter()
+        .append('g')
+            .classed('legend__item', true);
+
+    chart.positionLegendItems();
+
+    legendRegions.append('rect')
+        .attr({
+            height: rectHeight
+        }).style({
+            fill: function(d) {return chart.scales.regionColour(d);}
+        });
+
+    chart.setLegendRectWidth();
+
+    // TODO: move these text properties to CSS.
+    legendRegions.append('text')
+        .text(function(d) {return (/[^\()]*/.exec(d))[0];})
+        .attr({
+            x: 5,
+            y: rectHeight/1.25
+        });
+};
+
+
+exports.resetLegendDimensions = function() {
+    this.setLegendWidth();
+    this.setLegendRectWidth();
+    this.positionLegendItems();
+};
+
+
+// Calculate the current optimum number
+// of columns for the legend.
+exports.numLegendColumns = function() {
+    return this.isWide() ? 3 : 2;
+};
+
+
+exports.setLegendWidth = function() {
+    var chart = this;
+    var singleColumnEms = 12;
+    var numColumns = chart.numLegendColumns();
+
+    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+};
+
+
+exports.setLegendRectWidth = function() {
+    var chart = this;
+    var numColumns = chart.numLegendColumns();
+    var rectWidth;
+
+    rectWidth = (chart.legendWidth/numColumns) - chart.config.legendItemPadding*(numColumns-1);
+
+    // Set the width on the legend item rectangles.
+    chart.d3Objects.legend.selectAll('.legend__item rect')
+        .attr({
+            width: rectWidth
+        });
+};
+
+
+exports.positionLegendItems = function () {
+    var chart = this;
+    var legendItems = chart.d3Objects.legend.selectAll('.legend__item');
+    var numColumns = chart.numLegendColumns();
+    var maxItemsInColumn = Math.ceil(legendItems.size()/numColumns);
+    var groupXoffset = chart.legendWidth/numColumns;
+    var groupYOffset = 20;
+
+    legendItems
+        .attr({
+            transform: function(d, index) {
+                var column, row, xOffset, yOffset;
+
+                // Wide legend with multi-column layout.
+                column = Math.floor(index/maxItemsInColumn); // 0 .. numColumns-1
+                row = index % maxItemsInColumn; // 0 .. maxItemsInColumn-1
+
+                xOffset = groupXoffset * column;
+                yOffset = groupYOffset * row;
+
+                return 'translate(' + xOffset + ','+ yOffset + ')';
+            }
+        });
+};
+
+},{}],51:[function(require,module,exports){
 /**
  * Chart module initialisation, housekeeping, event listeners.
  *
@@ -14562,35 +14634,12 @@ module.exports = Chart;
 function Chart(chartOptions, data) {
     var chart = this;
 
-    // Chart object properties.
-    chart.id = chartOptions.id;
-    chart.svg = chartOptions.svg;
-    chart.defaultAccessors = chartOptions.defaultAccessors;
-    chart.zRange = chartOptions.zRange || false;
-    chart.accessors = {};
-    chart.hasLegend = false; // Currently overridden in chart type.
-    chart.baseFontSize = false;
-    chart.legendWidth = 0;
-    chart.dimensions = {};
-    chart.scales = {};
-    chart.data = {};
-    chart.d3Objects = {};
-
-    // Expected breakpoint reference.
-    // Values are minimum width in px at which media rule applies.
-    chart.breakPoints = {
-        'verynarrow': 0,
-        'narrow': 480,
-        'medium': 768,
-        'wide': 1024
-    };
-
     // Cope with lack of 'new' keyword.
     if (!(chart instanceof Chart)){
         return new Chart(chartOptions, data);
     }
 
-    if (chart.svg.tagName !== 'svg') {
+    if (chartOptions.svg.tagName !== 'svg') {
         throw new TypeError('Please make sure the supplied id is for an SVG element.');
     }
 
@@ -14598,12 +14647,34 @@ function Chart(chartOptions, data) {
         throw new TypeError('Please suppply data for the chart.');
     }
 
+
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
-    // Do some setup.
+    // Chart *constructor* prototype properties which can be overriden by chart options.
+    Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
+
+
+    // Chart object properties expected to exist (just here as a hint).
+    chart.accessors = {};
+    chart.baseFontSize = false;
+    chart.legendWidth = 0;
+    chart.dimensions = {};
+    chart.scales = {};
+    chart.data = {};
+    chart.d3Objects = {};
+
+
+    // Chart object properties defined by passed in chart options.
+    chart.id = chartOptions.id;
+    chart.svg = chartOptions.svg;
+    chart.defaultAccessors = chartOptions.defaultAccessors;
+    chart.zRange = chartOptions.zRange || [10, 20];
+
+
+    // Do some setup as defined by the chart type prototype.
     chart.init();
 
     // Record the initial dimensions of the chart
@@ -14617,7 +14688,9 @@ function Chart(chartOptions, data) {
     chart.recordbreakpointWidth();
 
     // Depends viewport width and breakpoint.
-    chart.setLegendWidth();
+    if (chart.config.hasLegend) {
+        chart.setLegendWidth();
+    }
 
     // Data operations.
     chart.addRawData(data);
@@ -14628,7 +14701,9 @@ function Chart(chartOptions, data) {
     chart.calculateOrdinalScales();
 
     // Draw the legend.
-    chart.drawLegend();
+    if (chart.config.hasLegend) {
+        chart.drawLegend();
+    }
 
     // The chart area padding depends on the computed legend dimensions.
     chart.setAreaChartPadding();
@@ -14787,7 +14862,7 @@ Chart.prototype.onResize = function() {
         this.recordBaseFontsize();
         this.recordbreakpointWidth();
 
-        if (this.hasLegend) {
+        if (this.config.hasLegend) {
             this.resetLegendDimensions();
             this.positionLegend();
         }
@@ -14801,6 +14876,7 @@ Chart.prototype.onResize = function() {
         this.rescaleDataPoints();
     }
 };
+
 
 
 /* HELPERS */
@@ -14824,14 +14900,11 @@ function getbreakpointWidth() {
         document.body.appendChild(breakpointHintEl);
     }
 
-    var matchingStylesheets = window.getMatchedCSSRules(breakpointHintEl);
-    var lastStyleSheet = matchingStylesheets[matchingStylesheets.length -1].style;
-
-    var breakpointWidth = lastStyleSheet.width;
+    var breakpointWidth = window.getComputedStyle(breakpointHintEl).width;
 
     return breakpointWidth;
 }
-},{"./chart-types":45,"lodash.assign":4}],48:[function(require,module,exports){
+},{"./chart-types":45,"lodash.assign":4}],52:[function(require,module,exports){
 /**
  * Controller for the inputs which determine which data are charted.
  */
@@ -14878,7 +14951,7 @@ Controls.prototype.bindToChart = function(chart) {
     // update the x and y accessors and
     // cause a redraw.
 };
-},{}],49:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Data service.
  */

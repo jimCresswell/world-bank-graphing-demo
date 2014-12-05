@@ -7,7 +7,7 @@ var throttle = require('lodash.throttle');
 
 var Controls = require('./controls');
 var Chart = require('./chart');
-var dataService = require('./dataService');
+var dataService = require('../service/dataService');
 
 var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-region_Data.json';
 var controlOptions = {id: 'indices-controls'};

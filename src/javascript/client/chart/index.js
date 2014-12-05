@@ -40,7 +40,7 @@ function Chart(chartOptions, data) {
     // Chart object prototype methods.
     assign(Chart.prototype, chartPrototypes[chartOptions.chartType]);
 
-    // Chart *constructor* prototype properties overriden by chart options.
+    // Chart *constructor* prototype properties which can be overriden by chart options.
     Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
 
 
@@ -59,16 +59,6 @@ function Chart(chartOptions, data) {
     chart.svg = chartOptions.svg;
     chart.defaultAccessors = chartOptions.defaultAccessors;
     chart.zRange = chartOptions.zRange || [10, 20];
-
-
-    // Expected breakpoint reference.
-    // Values are minimum width in px at which media rule applies.
-    chart.breakPoints = {
-        'verynarrow': 0,
-        'narrow': 480,
-        'medium': 768,
-        'wide': 1024
-    };
 
 
     // Do some setup as defined by the chart type prototype.

@@ -16,5 +16,14 @@ module.exports = {
     // The padding between side by side item groups in the legend in px.
     legendItemPadding: 10,
 
-    hasLegend: true
+    hasLegend: true,
+
+    // Expected breakpoint reference.
+    // Values are minimum width in px at which media rule applies.
+    breakPoints: {
+        'verynarrow': 0,
+        'narrow': 480,
+        'medium': 768,
+        'wide': 1024
+    }
 };

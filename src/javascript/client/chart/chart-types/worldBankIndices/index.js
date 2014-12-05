@@ -431,7 +431,7 @@ exports.resetLegendDimensions = function() {
 
 
 exports.isWide = function() {
-    return parseInt(this.breakpointWidth) >= this.breakPoints.medium;
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
 

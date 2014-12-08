@@ -48,13 +48,12 @@ function Controls(controlOptions, model) {
     controls.init(controlOptions);
 
 
-    controls.populate(model.getData());
+    controls.populate(model.getData(), controlOptions.defaultAccessors);
 
     // TODO, some sort of generic 'controls updated' function
     // that the specific implementation can call and which
     // fires the event?
 }
-
 
 
 Controls.prototype.init = function() {

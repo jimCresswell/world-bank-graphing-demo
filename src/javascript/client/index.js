@@ -18,6 +18,18 @@ var modelOptions = {
     chartType: 'worldBankIndices'
 };
 
+
+// Specify the default accessors and reference in control options
+// and chart options rather then set in controls and pass to chart
+// because chart should be instantiable and controllable without
+// instantiaying UI controls.
+var defaultAccessors = {
+    x: 'Population, total',
+    y: 'Literacy rate, adult total (% of people ages 15 and above)',
+    z: 'Internet users (per 100 people)',
+    year: '2000'
+};
+
 var controlOptions = {
     chartType: 'worldBankIndices',
     id: 'chart-controls',
@@ -27,17 +39,14 @@ var controlOptions = {
     idRangeYear: 'chart1-range-year',
     idSelectYear: 'chart1-select-year',
     classMinYear: 'control__min-year',
-    classMaxYear: 'control__max-year'
+    classMaxYear: 'control__max-year',
+    defaultAccessors: defaultAccessors
 };
 
 var chartOptions = {
     chartType: 'worldBankIndices',
     id: 'chart1-svg',
-    defaultAccessors: {
-        x: 'Population, total',
-        y: 'Literacy rate, adult total (% of people ages 15 and above)',
-        z: 'Internet users (per 100 people)'
-    },
+    defaultAccessors: defaultAccessors,
     zRange: [10, 20]
 };
 

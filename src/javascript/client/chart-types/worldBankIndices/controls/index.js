@@ -8,6 +8,12 @@
 
 var d3 = require('d3');
 
+var dimensionNamesMap = {
+    horizontal: 'x',
+    vertical: 'y',
+    radius: 'z'
+};
+
 
 /**
  * Chart-type specific initialisation tasks.
@@ -36,6 +42,69 @@ exports.init = function(options) {
 
     // Activate two way binding between the year range and year select controls.
     twowayValueBind(yearRange, yearSelect);
+};
+
+
+/**
+ * Populate the UI controls with appropriate data.
+ * @param  {object} data The chart data.
+ * @param  {object} defaultAccessors The chart default accessors.
+ * @return {undefined}
+ */
+exports.populate = function(data, defaultAccessors) {
+    this.populateIndices.apply(this, arguments);
+    this.populateYears.apply(this, arguments);
+};
+
+
+// Indices select options.
+exports.populateIndices = function(data, defaultAccessors) {
+    var d3Objects = this.d3Objects;
+
+
+    // The key is needed to match on default values passed in
+    // to the controls constructor. The descriptor is needed
+    // so that the options in the select inputs are
+    // 1) Shortish and
+    // 2) Match the axes labels on the graph itself.
+    var indices = Object.keys(data.indices).map(function(key) {
+        return {
+            name: key,
+            value: data.indices[key].descriptor
+        };
+    });
+
+    ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
+        var d3SelectEl = d3Objects[dimension];
+        var defaultValue = defaultAccessors[dimensionNamesMap[dimension]];
+        appendOptions(d3SelectEl, indices, defaultValue);
+    });
+};
+
+
+// Years control options.
+exports.populateYears = function(data, defaultAccessors) {
+    var d3Objects = this.d3Objects;
+    var years = data.years;
+    var defaultYear = defaultAccessors.year;
+    var minYear = years[0];
+    var maxYear = years[years.length-1];
+
+    // Year min-max hints.
+    d3Objects.yearMinSpan.text(minYear);
+    d3Objects.yearMaxSpan.text(maxYear);
+
+    // years range control.
+    d3Objects.yearRange
+        .attr({
+            min: function() {return minYear;},
+            max: function() {return maxYear;},
+            value: defaultYear,
+            step: 1
+        });
+
+    // Years select.
+    appendOptions(d3Objects.yearSelect, years, defaultYear);
 };
 
 
@@ -69,57 +138,8 @@ function bindValueFactory(d3El) {
 }
 
 
-/**
- * Populate the UI controls with appropriate data.
- * @param  {object} data The chart data.
- * @return {undefined}
- */
-exports.populate = function(data) {
-    var controls = this;
 
-    controls.populateIndices(data);
-    controls.populateYears(data);
-};
-
-
-// Indices select options.
-exports.populateIndices = function(data) {
-    var d3Objects = this.d3Objects;
-    var indices;
-
-    indices = Object.keys(data.indices).map(function(key) {
-        return data.indices[key].descriptor;
-    });
-
-    ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
-        var d3SelectEl = d3Objects[dimension];
-        appendOptions(d3SelectEl, indices);
-    });
-};
-
-
-// Years control options.
-exports.populateYears = function(data) {
-    var d3Objects = this.d3Objects;
-    var years = data.years;
-    var minYear = years[0];
-    var maxYear = years[years.length-1];
-
-    // Year min-max hints.
-    d3Objects.yearMinSpan.text(minYear);
-    d3Objects.yearMaxSpan.text(maxYear);
-
-    // years range control.
-    d3Objects.yearRange
-        .attr({
-            min: function() {return minYear;},
-            max: function() {return maxYear;},
-            step: 1
-        });
-
-    // Years select.
-    appendOptions(d3Objects.yearSelect, years);
-};
+/* Helpers. */
 
 
 /**
@@ -129,16 +149,34 @@ exports.populateYears = function(data) {
  * @param  {array} data       An arrray of data to populate the options with.
  * @return {undefined}
  */
-function appendOptions(d3SelectEl, data) {
+function appendOptions(d3SelectEl, data, defaultValue) {
     d3SelectEl.selectAll('option')
             .data(data)
             .enter()
                 .append('option')
                     .attr({
-                        value: function(d) {return d;},
-                        title: function(d) {return d;}
+                        value: getName,
+                        title: getName,
+                        selected: function(d) {
+                            var value = getName(d);
+                            return defaultValue === value ? 'select' : null;
+                        }
                     })
-                    .text(function(d) {return truncateString(d, 14);});
+                    .text(function(d) {return truncateString(getValue(d), 14);});
+
+    // Datum can be strings or objects containing 'name' and 'value' properties.
+    function getKey(key, d) {
+        if (typeof d === 'object') {
+            return d[key];
+        }
+        return d;
+    }
+    function getName(d) {
+        return getKey('name', d);
+    }
+    function getValue(d) {
+        return getKey('value', d);
+    }
 }
 
 

@@ -57,7 +57,7 @@ exports.populateLegend = function() {
 
     chart.setLegendRectWidth();
 
-    // TODO: move these text properties to CSS.
+    // Only include region descriptions up to any opening bracket.
     legendRegions.append('text')
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({

@@ -20,7 +20,14 @@ var modelOptions = {
 
 var controlOptions = {
     chartType: 'worldBankIndices',
-    id: 'chart-controls'
+    id: 'chart-controls',
+    idSelectHorizontal: 'chart1-select-horizontal',
+    idSelectVertical: 'chart1-select-vertical',
+    idSelectRadius: 'chart1-select-radius',
+    idRangeYear: 'chart1-range-year',
+    idSelectYear: 'chart1-select-year',
+    classMinYear: 'control__min-year',
+    classMaxYear: 'control__max-year'
 };
 
 var chartOptions = {
@@ -71,6 +78,7 @@ function init(data) {
     // TODO bind changes in the controls to the chart update functionality.
     // Possibly using events?
 
+    // Re-style the chart on resize.
     addResizeListener(chart);
 }
 

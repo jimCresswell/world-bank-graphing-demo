@@ -162,7 +162,7 @@ function appendOptions(d3SelectEl, data, defaultValue) {
                             return defaultValue === value ? 'select' : null;
                         }
                     })
-                    .text(function(d) {return truncateString(getValue(d), 14);});
+                    .text(function(d) {return getValue(d);});
 
     // Datum can be strings or objects containing 'name' and 'value' properties.
     function getKey(key, d) {
@@ -177,22 +177,4 @@ function appendOptions(d3SelectEl, data, defaultValue) {
     function getValue(d) {
         return getKey('value', d);
     }
-}
-
-
-/**
- * Take a string and return a string no longer than maxNewL characters.
- * Truncated strings have their last 3 characters replaced with dots.
- * @param  {string} string The input string.
- * @return {string}        The possibly modified string.
- */
-function truncateString(string, maxNewL) {
-    string = string.toString();
-    maxNewL = maxNewL || 16;
-    var maxL = maxNewL - 3;
-    var l = string.length;
-    if (l > maxL) {
-        return string.substring(0, maxL-1) + '...';
-    }
-    return string;
 }

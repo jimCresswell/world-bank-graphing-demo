@@ -102,6 +102,10 @@
     margin-right: 0.4em;
 }
 
+.chart-container .control-group .control select {
+    width: 8em;
+}
+
 .axis {
     font-size: 0.8em;
 }

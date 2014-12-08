@@ -24,16 +24,49 @@ exports.init = function(options) {
     d3Objects.horizontal = form.select('#' + options.idSelectHorizontal);
     d3Objects.vertical = form.select('#' + options.idSelectVertical);
     d3Objects.radius = form.select('#' + options.idSelectRadius);
-    d3Objects.yearRange = form.select('#' + options.idRangeYear);
+    var yearRange = d3Objects.yearRange = form.select('#' + options.idRangeYear);
     var yearSelect = d3Objects.yearSelect = form.select('#' + options.idSelectYear);
 
     // Dynamic control labelling.
     // Get D3 references to the min-year span and the max-year span.
-    ['Min', 'Max'].forEach(function(extreme) {
+    ['Min', 'Max'].forEach(function (extreme) {
         d3Objects['year' + extreme + 'Span'] = d3.select(yearSelect.node().parentNode)
             .select('.' + options['class' + extreme + 'Year']);
     });
+
+    // Activate two way binding between the year range and year select controls.
+    twowayValueBind(yearRange, yearSelect);
 };
+
+
+/**
+ * Provide 'onChange' value binding between two D3 objects representing input controls.
+ * @param  {object} d3El1 D3 object representing the first input control.
+ * @param  {[type]} d3El2 D3 object representing the second input control.
+ * @return {undefined}
+ */
+function twowayValueBind(d3El1, d3El2) {
+
+    // Use the DOM event API because the D3 event API
+    // only allows one binding of each event type.
+    d3El1.node().addEventListener('change', bindValueFactory(d3El2));
+    d3El2.node().addEventListener('change', bindValueFactory(d3El1));
+}
+
+
+/**
+ * Given a D3 object representing an input control return a function
+ * which maps that controls value to another element, for use with
+ * an event listener.
+ * @param  {object} d3El D3 object representing an input control.
+ * @return {undefined}
+ */
+function bindValueFactory(d3El) {
+    return function() {
+        var otherEl = this;
+        d3El.property('value', otherEl.value);
+    };
+}
 
 
 /**

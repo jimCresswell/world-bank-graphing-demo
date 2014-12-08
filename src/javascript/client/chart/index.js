@@ -84,8 +84,10 @@ function Chart(chartOptions, model) {
     }
 
     // Data operations.
+    // Defaults to default accessors.
     chart.setAccessors();
     chart.deriveCurrentData();
+    chart.findDataExtremes();
 
     // Ordinal scales only dependent on the data.
     chart.calculateOrdinalScales();

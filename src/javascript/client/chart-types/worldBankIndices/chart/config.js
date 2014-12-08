@@ -21,8 +21,8 @@ module.exports = {
     // Expected breakpoint reference.
     // Values are minimum width in px at which media rule applies.
     breakPoints: {
-        'verynarrow': 0,
-        'narrow': 480,
+        'veryNarrow': 400,
+        'narrow': 520,
         'medium': 768,
         'wide': 1024
     }

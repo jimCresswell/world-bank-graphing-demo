@@ -77,7 +77,13 @@ exports.resetLegendDimensions = function() {
 // Calculate the current optimum number
 // of columns for the legend.
 exports.numLegendColumns = function() {
-    return this.isWide() ? 3 : 2;
+    var chart = this;
+    if (chart.isAtleastMedium()) {
+        return 3;
+    } else if (chart.isAtleastNarrow()) {
+        return 2;
+    }
+    return 1;
 };
 
 

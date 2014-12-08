@@ -32,7 +32,7 @@ exports.drawAxes = function() {
 
     // Request a number of x-axis ticks
     // according to css breakpoint.
-    var numTicks = this.isWide() ? 9 : 3;
+    var numTicks = chart.isAtleastMedium() ? 9 : 3;
     xAxisFactory.ticks(numTicks);
 
     xAxisFactory.scale(chart.scales.x);

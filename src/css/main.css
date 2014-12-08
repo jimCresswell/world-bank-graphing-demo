@@ -125,7 +125,7 @@ main > footer {
  * Landscape and larger phones
  */
 
-@media (min-width: 480px) {
+@media (min-width: 520px) {
   html {
     font-size: 16px;
   }

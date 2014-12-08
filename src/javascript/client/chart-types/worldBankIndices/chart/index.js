@@ -152,10 +152,17 @@ exports.enableDatapointInteractions = function() {
 };
 
 
-exports.isWide = function() {
+exports.isAtleastNarrow = function() {
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.narrow;
+};
+
+exports.isAtleastMedium = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
+exports.isAtleastWide = function() {
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
+};
 
 /**
  * Update the data point attributes according to

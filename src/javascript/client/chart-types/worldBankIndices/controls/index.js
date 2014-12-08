@@ -52,8 +52,8 @@ exports.init = function(options) {
  * @return {undefined}
  */
 exports.populate = function(data, defaultAccessors) {
-    this.populateIndices.apply(this, arguments);
-    this.populateYears.apply(this, arguments);
+    this.populateIndices(data, defaultAccessors);
+    this.populateYears(data, defaultAccessors);
 };
 
 

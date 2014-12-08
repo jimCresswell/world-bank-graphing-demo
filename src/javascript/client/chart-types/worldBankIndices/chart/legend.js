@@ -92,7 +92,11 @@ exports.setLegendWidth = function() {
     var singleColumnEms = 12;
     var numColumns = chart.numLegendColumns();
 
-    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+    if (numColumns > 1) {
+        chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+    } else {
+        chart.legendWidth = chart.dimensions.width;
+    }
 };
 
 

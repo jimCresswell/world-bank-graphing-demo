@@ -8,7 +8,6 @@
 var d3 = require('d3');
 var _assign = require('lodash.assign');
 var _clone = require('lodash.clone');
-var _throttle = require('lodash.throttle');
 
 var inputNamesMap = {
     horizontal: 'x',
@@ -56,21 +55,17 @@ WorldBankIndicatorControlsPrototype.addDomEventListeners = function() {
     var controls = this;
     var d3Objects = this.d3Objects;
 
-    // Generate a throttled function which updates
-    // the accessors with new values at most once
-    // every throttleLimit milliseconds.
+    // Generate a function which updates
+    // the accessors with new values.
     function updateAccessorFactory(selectInput) {
-        var throttleLimit = 100;
-        return _throttle(updateAccessor, throttleLimit, {trailing: true});
-
-        function updateAccessor() {
+         return function updateAccessor() {
             /* jshint validthis: true */
 
             var element = this;
             var newAccessors = {};
             newAccessors[inputNamesMap[selectInput]] = element.value;
             controls.setAccessors(newAccessors);
-        }
+        };
     }
 
     ['horizontal', 'vertical', 'radius', 'yearSelect'].forEach(function(selectInput) {

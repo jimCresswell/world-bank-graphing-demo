@@ -5,7 +5,9 @@
  */
 'use strict';
 
-exports.addRawData = function(rawData) {
+var WorldBankIndicatorModelPrototype = module.exports = {};
+
+WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
     var data = this.data = {};
 
     // rawData[region][index] == [{year:, value:},{year:, value:},...]

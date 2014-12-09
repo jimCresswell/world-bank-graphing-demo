@@ -15,15 +15,20 @@ var dataPoints = require('./dataPoints');
 var tooltip = require('./tooltip');
 
 
-// Make the chart type specific config
-// available on the chart prototype
-// before calling this.init() so that the
-// generic chart constructor can use it.
-exports.config = typeConfig;
+var WorldBankIndicatorChartPrototype = module.exports = {};
 
+
+WorldBankIndicatorChartPrototype.config = typeConfig;
+
+_assign(WorldBankIndicatorChartPrototype, viewModel);
+_assign(WorldBankIndicatorChartPrototype, scales);
+_assign(WorldBankIndicatorChartPrototype, legend);
+_assign(WorldBankIndicatorChartPrototype, axes);
+_assign(WorldBankIndicatorChartPrototype, dataPoints);
+_assign(WorldBankIndicatorChartPrototype, tooltip);
 
 // Chart type specific initialisation tasks.
-exports.init = function() {
+WorldBankIndicatorChartPrototype.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
@@ -36,17 +41,6 @@ exports.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
-
-    // Mix in other functionality.
-    // TODO: make these instantiable so that
-    // 1) They can use dependency injection.
-    // 2) Functionality from a module is explicitly namespaced.
-    _assign(chart, viewModel);
-    _assign(chart, scales);
-    _assign(chart, legend);
-    _assign(chart, axes);
-    _assign(chart, dataPoints);
-    _assign(chart, tooltip);
 };
 
 
@@ -55,7 +49,7 @@ exports.init = function() {
  * Used externally to control graph.
  * @param {object} newAccessors A set of accessors.
  */
-exports.updateAccessors = function(newAccessors) {
+WorldBankIndicatorChartPrototype.updateAccessors = function(newAccessors) {
     var chart = this;
     chart.setAccessors(newAccessors);
     chart.deriveCurrentData();
@@ -71,7 +65,7 @@ exports.updateAccessors = function(newAccessors) {
  * Used externally to control graph.
  * @param {string} yaer A year string.
  */
-exports.updateYear = function(newYear) {
+WorldBankIndicatorChartPrototype.updateYear = function(newYear) {
     var chart = this;
     chart.accessors.year = newYear;
     chart.deriveCurrentData();
@@ -83,7 +77,7 @@ exports.updateYear = function(newYear) {
 
 // Chart area SVG padding in pixels.
 // Depends on the computed dimensions of the legend.
-exports.setAreaChartPadding = function() {
+WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
     var chart = this;
     var legend = chart.d3Objects.legend;
 
@@ -99,7 +93,7 @@ exports.setAreaChartPadding = function() {
 };
 
 
-exports.positionChartElements = function () {
+WorldBankIndicatorChartPrototype.positionChartElements = function () {
     var chart = this;
 
     // Axes and plot shifted right by the padding.
@@ -122,7 +116,7 @@ exports.positionChartElements = function () {
  * Draw the graph
  * @return {undefined}
  */
-exports.drawChart = function() {
+WorldBankIndicatorChartPrototype.drawChart = function() {
     this.drawAxes();
     this.labelAxes();
     this.positionAxesLabels();
@@ -130,16 +124,16 @@ exports.drawChart = function() {
 };
 
 
-exports.isAtleastNarrow = function() {
+WorldBankIndicatorChartPrototype.isAtleastNarrow = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.narrow;
 };
 
 
-exports.isAtleastMedium = function() {
+WorldBankIndicatorChartPrototype.isAtleastMedium = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
 
-exports.isAtleastWide = function() {
+WorldBankIndicatorChartPrototype.isAtleastWide = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
 };

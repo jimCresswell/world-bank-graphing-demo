@@ -15,12 +15,14 @@ var dimensionNamesMap = {
 };
 
 
+var WorldBankIndicatorControlsPrototype = module.exports = {};
+
 /**
  * Chart-type specific initialisation tasks.
  * @param  {object} options Options for the chart controls.
  * @return {undefined}
  */
-exports.init = function(options) {
+WorldBankIndicatorControlsPrototype.init = function(options) {
     var controls = this;
     var d3Objects = controls.d3Objects;
 
@@ -51,14 +53,14 @@ exports.init = function(options) {
  * @param  {object} defaultAccessors The chart default accessors.
  * @return {undefined}
  */
-exports.populate = function(data, defaultAccessors) {
+WorldBankIndicatorControlsPrototype.populate = function(data, defaultAccessors) {
     this.populateIndices(data, defaultAccessors);
     this.populateYears(data, defaultAccessors);
 };
 
 
 // Indices select options.
-exports.populateIndices = function(data, defaultAccessors) {
+WorldBankIndicatorControlsPrototype.populateIndices = function(data, defaultAccessors) {
     var d3Objects = this.d3Objects;
 
 
@@ -83,7 +85,7 @@ exports.populateIndices = function(data, defaultAccessors) {
 
 
 // Years control options.
-exports.populateYears = function(data, defaultAccessors) {
+WorldBankIndicatorControlsPrototype.populateYears = function(data, defaultAccessors) {
     var d3Objects = this.d3Objects;
     var years = data.years;
     var defaultYear = defaultAccessors.year;
@@ -108,7 +110,7 @@ exports.populateYears = function(data, defaultAccessors) {
 };
 
 
-exports.addHooks = function(chart) {
+WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
     var controls = this;
 
     // DEBUG

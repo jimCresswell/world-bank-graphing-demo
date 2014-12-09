@@ -24,15 +24,28 @@
 
 /* Tall and thin */
 .chart-container .chart {
-    width: 320px;
+    width: 270px;
     height: 500px;
 }
 
-@media (min-width: 480px) {
+
+@media (min-width: 400px) {
 
     /* Breakpoint hinting mechanism. */
     #breakpointHint {
-      width: 480px;
+      width: 400px;
+    }
+
+    .chart-container .chart {
+        width: 320px;
+    }
+}
+
+@media (min-width: 520px) {
+
+    /* Breakpoint hinting mechanism. */
+    #breakpointHint {
+      width: 520px;
     }
 
     .chart-container .chart {
@@ -48,7 +61,7 @@
     }
 
     .chart-container .chart {
-        width: 700px;
+        width: 600px;
     }
 }
 
@@ -98,12 +111,12 @@
     margin-bottom: 1em;
 }
 
-.chart-container .control-group .control input {
-    margin-bottom: 1em;
-}
-
 .chart-container .control-group .control label {
     margin-right: 0.4em;
+}
+
+.chart-container .control-group .control select {
+    width: 8em;
 }
 
 .axis {

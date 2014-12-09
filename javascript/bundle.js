@@ -19,20 +19,39 @@ var modelOptions = {
     chartType: 'worldBankIndices'
 };
 
+
+// Specify the default accessors and reference in control options
+// and chart options rather then set in controls and pass to chart
+// because chart should be instantiable and controllable without
+// instantiaying UI controls.
+var defaultAccessors = {
+    x: 'Literacy rate, adult total (% of people ages 15 and above)',
+    y: 'GDP growth (annual %)',
+    z: 'Population, total',
+    year: '2010'
+};
+//'Life expectancy at birth, total (years)',
+//'Unemployment, total (% of total labor force) (modeled ILO estimate)',
+//'Inflation, GDP deflator (annual %)',
+
 var controlOptions = {
     chartType: 'worldBankIndices',
-    id: 'chart-controls'
+    id: 'chart-controls',
+    idSelectHorizontal: 'chart1-select-horizontal',
+    idSelectVertical: 'chart1-select-vertical',
+    idSelectRadius: 'chart1-select-radius',
+    idRangeYear: 'chart1-range-year',
+    idSelectYear: 'chart1-select-year',
+    classMinYear: 'control__min-year',
+    classMaxYear: 'control__max-year',
+    defaultAccessors: defaultAccessors
 };
 
 var chartOptions = {
     chartType: 'worldBankIndices',
     id: 'chart1-svg',
-    defaultAccessors: {
-        x: 'Population, total',
-        y: 'Literacy rate, adult total (% of people ages 15 and above)',
-        z: 'Internet users (per 100 people)'
-    },
-    zRange: [10, 20]
+    defaultAccessors: defaultAccessors,
+    zRange: [10, 30]
 };
 
 
@@ -69,9 +88,9 @@ function init(data) {
     controls = new Controls(controlOptions, model);
     chart = new Chart(chartOptions, model);
 
-    // TODO bind changes in the controls to the chart update functionality.
-    // Possibly using events?
+    controls.addHooks(chart);
 
+    // Re-style the chart on resize.
     addResizeListener(chart);
 }
 
@@ -84,7 +103,310 @@ function addResizeListener(component) {
     window.addEventListener('resize', throttle(onResize, throttleLimit, {trailing: true}));
 }
 
-},{"../service/dataService":59,"./chart":56,"./controls":57,"./model":58,"lodash.throttle":34}],2:[function(require,module,exports){
+},{"../service/dataService":102,"./chart":99,"./controls":100,"./model":101,"lodash.throttle":76}],2:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    var m;
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (isFunction(emitter._events[type]))
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}],3:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -172,7 +494,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 !function() {
   var d3 = {
     version: "3.4.13"
@@ -9388,7 +9710,7 @@ process.chdir = function (dir) {
   if (typeof define === "function" && define.amd) define(d3); else if (typeof module === "object" && module.exports) module.exports = d3;
   this.d3 = d3;
 }();
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9460,7 +9782,7 @@ var assign = function(object, source, guard) {
 
 module.exports = assign;
 
-},{"lodash._basecreatecallback":5,"lodash._objecttypes":26,"lodash.keys":27}],5:[function(require,module,exports){
+},{"lodash._basecreatecallback":6,"lodash._objecttypes":27,"lodash.keys":28}],6:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9542,7 +9864,7 @@ function baseCreateCallback(func, thisArg, argCount) {
 
 module.exports = baseCreateCallback;
 
-},{"lodash._setbinddata":6,"lodash.bind":9,"lodash.identity":23,"lodash.support":24}],6:[function(require,module,exports){
+},{"lodash._setbinddata":7,"lodash.bind":10,"lodash.identity":24,"lodash.support":25}],7:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9587,7 +9909,7 @@ var setBindData = !defineProperty ? noop : function(func, value) {
 
 module.exports = setBindData;
 
-},{"lodash._isnative":7,"lodash.noop":8}],7:[function(require,module,exports){
+},{"lodash._isnative":8,"lodash.noop":9}],8:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9623,7 +9945,7 @@ function isNative(value) {
 
 module.exports = isNative;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9651,7 +9973,7 @@ function noop() {
 
 module.exports = noop;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9693,7 +10015,7 @@ function bind(func, thisArg) {
 
 module.exports = bind;
 
-},{"lodash._createwrapper":10,"lodash._slice":22}],10:[function(require,module,exports){
+},{"lodash._createwrapper":11,"lodash._slice":23}],11:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9801,7 +10123,7 @@ function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, ar
 
 module.exports = createWrapper;
 
-},{"lodash._basebind":11,"lodash._basecreatewrapper":16,"lodash._slice":22,"lodash.isfunction":21}],11:[function(require,module,exports){
+},{"lodash._basebind":12,"lodash._basecreatewrapper":17,"lodash._slice":23,"lodash.isfunction":22}],12:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9865,7 +10187,7 @@ function baseBind(bindData) {
 
 module.exports = baseBind;
 
-},{"lodash._basecreate":12,"lodash._setbinddata":6,"lodash._slice":22,"lodash.isobject":15}],12:[function(require,module,exports){
+},{"lodash._basecreate":13,"lodash._setbinddata":7,"lodash._slice":23,"lodash.isobject":16}],13:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -9911,11 +10233,11 @@ if (!nativeCreate) {
 module.exports = baseCreate;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._isnative":13,"lodash.isobject":15,"lodash.noop":14}],13:[function(require,module,exports){
-module.exports=require(7)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":7}],14:[function(require,module,exports){
+},{"lodash._isnative":14,"lodash.isobject":16,"lodash.noop":15}],14:[function(require,module,exports){
 module.exports=require(8)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":8}],15:[function(require,module,exports){
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],15:[function(require,module,exports){
+module.exports=require(9)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":9}],16:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -9956,7 +10278,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{"lodash._objecttypes":26}],16:[function(require,module,exports){
+},{"lodash._objecttypes":27}],17:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10036,15 +10358,15 @@ function baseCreateWrapper(bindData) {
 
 module.exports = baseCreateWrapper;
 
-},{"lodash._basecreate":17,"lodash._setbinddata":6,"lodash._slice":22,"lodash.isobject":20}],17:[function(require,module,exports){
-module.exports=require(12)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash._basecreate/index.js":12,"lodash._isnative":18,"lodash.isobject":20,"lodash.noop":19}],18:[function(require,module,exports){
-module.exports=require(7)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":7}],19:[function(require,module,exports){
+},{"lodash._basecreate":18,"lodash._setbinddata":7,"lodash._slice":23,"lodash.isobject":21}],18:[function(require,module,exports){
+module.exports=require(13)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash._basecreate/index.js":13,"lodash._isnative":19,"lodash.isobject":21,"lodash.noop":20}],19:[function(require,module,exports){
 module.exports=require(8)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":8}],20:[function(require,module,exports){
-module.exports=require(15)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":15,"lodash._objecttypes":26}],21:[function(require,module,exports){
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],20:[function(require,module,exports){
+module.exports=require(9)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":9}],21:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":27}],22:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10073,7 +10395,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10113,7 +10435,7 @@ function slice(array, start, end) {
 
 module.exports = slice;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10143,7 +10465,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -10187,9 +10509,9 @@ support.funcNames = typeof Function.name == 'string';
 module.exports = support;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lodash._isnative":25}],25:[function(require,module,exports){
-module.exports=require(7)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":7}],26:[function(require,module,exports){
+},{"lodash._isnative":26}],26:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],27:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10211,7 +10533,7 @@ var objectTypes = {
 
 module.exports = objectTypes;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10249,9 +10571,9 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"lodash._isnative":28,"lodash._shimkeys":29,"lodash.isobject":30}],28:[function(require,module,exports){
-module.exports=require(7)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":7}],29:[function(require,module,exports){
+},{"lodash._isnative":29,"lodash._shimkeys":30,"lodash.isobject":31}],29:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],30:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10291,9 +10613,528 @@ var shimKeys = function(object) {
 
 module.exports = shimKeys;
 
-},{"lodash._objecttypes":26}],30:[function(require,module,exports){
-module.exports=require(15)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":15,"lodash._objecttypes":26}],31:[function(require,module,exports){
+},{"lodash._objecttypes":27}],31:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":27}],32:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var baseClone = require('lodash._baseclone'),
+    baseCreateCallback = require('lodash._basecreatecallback');
+
+/**
+ * Creates a clone of `value`. If `isDeep` is `true` nested objects will also
+ * be cloned, otherwise they will be assigned by reference. If a callback
+ * is provided it will be executed to produce the cloned values. If the
+ * callback returns `undefined` cloning will be handled by the method instead.
+ * The callback is bound to `thisArg` and invoked with one argument; (value).
+ *
+ * @static
+ * @memberOf _
+ * @category Objects
+ * @param {*} value The value to clone.
+ * @param {boolean} [isDeep=false] Specify a deep clone.
+ * @param {Function} [callback] The function to customize cloning values.
+ * @param {*} [thisArg] The `this` binding of `callback`.
+ * @returns {*} Returns the cloned value.
+ * @example
+ *
+ * var characters = [
+ *   { 'name': 'barney', 'age': 36 },
+ *   { 'name': 'fred',   'age': 40 }
+ * ];
+ *
+ * var shallow = _.clone(characters);
+ * shallow[0] === characters[0];
+ * // => true
+ *
+ * var deep = _.clone(characters, true);
+ * deep[0] === characters[0];
+ * // => false
+ *
+ * _.mixin({
+ *   'clone': _.partialRight(_.clone, function(value) {
+ *     return _.isElement(value) ? value.cloneNode(false) : undefined;
+ *   })
+ * });
+ *
+ * var clone = _.clone(document.body);
+ * clone.childNodes.length;
+ * // => 0
+ */
+function clone(value, isDeep, callback, thisArg) {
+  // allows working with "Collections" methods without using their `index`
+  // and `collection` arguments for `isDeep` and `callback`
+  if (typeof isDeep != 'boolean' && isDeep != null) {
+    thisArg = callback;
+    callback = isDeep;
+    isDeep = false;
+  }
+  return baseClone(value, isDeep, typeof callback == 'function' && baseCreateCallback(callback, thisArg, 1));
+}
+
+module.exports = clone;
+
+},{"lodash._baseclone":33,"lodash._basecreatecallback":50}],33:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var assign = require('lodash.assign'),
+    forEach = require('lodash.foreach'),
+    forOwn = require('lodash.forown'),
+    getArray = require('lodash._getarray'),
+    isArray = require('lodash.isarray'),
+    isObject = require('lodash.isobject'),
+    releaseArray = require('lodash._releasearray'),
+    slice = require('lodash._slice');
+
+/** Used to match regexp flags from their coerced string values */
+var reFlags = /\w*$/;
+
+/** `Object#toString` result shortcuts */
+var argsClass = '[object Arguments]',
+    arrayClass = '[object Array]',
+    boolClass = '[object Boolean]',
+    dateClass = '[object Date]',
+    funcClass = '[object Function]',
+    numberClass = '[object Number]',
+    objectClass = '[object Object]',
+    regexpClass = '[object RegExp]',
+    stringClass = '[object String]';
+
+/** Used to identify object classifications that `_.clone` supports */
+var cloneableClasses = {};
+cloneableClasses[funcClass] = false;
+cloneableClasses[argsClass] = cloneableClasses[arrayClass] =
+cloneableClasses[boolClass] = cloneableClasses[dateClass] =
+cloneableClasses[numberClass] = cloneableClasses[objectClass] =
+cloneableClasses[regexpClass] = cloneableClasses[stringClass] = true;
+
+/** Used for native method references */
+var objectProto = Object.prototype;
+
+/** Used to resolve the internal [[Class]] of values */
+var toString = objectProto.toString;
+
+/** Native method shortcuts */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to lookup a built-in constructor by [[Class]] */
+var ctorByClass = {};
+ctorByClass[arrayClass] = Array;
+ctorByClass[boolClass] = Boolean;
+ctorByClass[dateClass] = Date;
+ctorByClass[funcClass] = Function;
+ctorByClass[objectClass] = Object;
+ctorByClass[numberClass] = Number;
+ctorByClass[regexpClass] = RegExp;
+ctorByClass[stringClass] = String;
+
+/**
+ * The base implementation of `_.clone` without argument juggling or support
+ * for `thisArg` binding.
+ *
+ * @private
+ * @param {*} value The value to clone.
+ * @param {boolean} [isDeep=false] Specify a deep clone.
+ * @param {Function} [callback] The function to customize cloning values.
+ * @param {Array} [stackA=[]] Tracks traversed source objects.
+ * @param {Array} [stackB=[]] Associates clones with source counterparts.
+ * @returns {*} Returns the cloned value.
+ */
+function baseClone(value, isDeep, callback, stackA, stackB) {
+  if (callback) {
+    var result = callback(value);
+    if (typeof result != 'undefined') {
+      return result;
+    }
+  }
+  // inspect [[Class]]
+  var isObj = isObject(value);
+  if (isObj) {
+    var className = toString.call(value);
+    if (!cloneableClasses[className]) {
+      return value;
+    }
+    var ctor = ctorByClass[className];
+    switch (className) {
+      case boolClass:
+      case dateClass:
+        return new ctor(+value);
+
+      case numberClass:
+      case stringClass:
+        return new ctor(value);
+
+      case regexpClass:
+        result = ctor(value.source, reFlags.exec(value));
+        result.lastIndex = value.lastIndex;
+        return result;
+    }
+  } else {
+    return value;
+  }
+  var isArr = isArray(value);
+  if (isDeep) {
+    // check for circular references and return corresponding clone
+    var initedStack = !stackA;
+    stackA || (stackA = getArray());
+    stackB || (stackB = getArray());
+
+    var length = stackA.length;
+    while (length--) {
+      if (stackA[length] == value) {
+        return stackB[length];
+      }
+    }
+    result = isArr ? ctor(value.length) : {};
+  }
+  else {
+    result = isArr ? slice(value) : assign({}, value);
+  }
+  // add array properties assigned by `RegExp#exec`
+  if (isArr) {
+    if (hasOwnProperty.call(value, 'index')) {
+      result.index = value.index;
+    }
+    if (hasOwnProperty.call(value, 'input')) {
+      result.input = value.input;
+    }
+  }
+  // exit for shallow clone
+  if (!isDeep) {
+    return result;
+  }
+  // add the source value to the stack of traversed objects
+  // and associate it with its clone
+  stackA.push(value);
+  stackB.push(result);
+
+  // recursively populate clone (susceptible to call stack limits)
+  (isArr ? forEach : forOwn)(value, function(objValue, key) {
+    result[key] = baseClone(objValue, isDeep, callback, stackA, stackB);
+  });
+
+  if (initedStack) {
+    releaseArray(stackA);
+    releaseArray(stackB);
+  }
+  return result;
+}
+
+module.exports = baseClone;
+
+},{"lodash._getarray":34,"lodash._releasearray":36,"lodash._slice":39,"lodash.assign":5,"lodash.foreach":40,"lodash.forown":41,"lodash.isarray":46,"lodash.isobject":48}],34:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var arrayPool = require('lodash._arraypool');
+
+/**
+ * Gets an array from the array pool or creates a new one if the pool is empty.
+ *
+ * @private
+ * @returns {Array} The array from the pool.
+ */
+function getArray() {
+  return arrayPool.pop() || [];
+}
+
+module.exports = getArray;
+
+},{"lodash._arraypool":35}],35:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+
+/** Used to pool arrays and objects used internally */
+var arrayPool = [];
+
+module.exports = arrayPool;
+
+},{}],36:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var arrayPool = require('lodash._arraypool'),
+    maxPoolSize = require('lodash._maxpoolsize');
+
+/**
+ * Releases the given array back to the array pool.
+ *
+ * @private
+ * @param {Array} [array] The array to release.
+ */
+function releaseArray(array) {
+  array.length = 0;
+  if (arrayPool.length < maxPoolSize) {
+    arrayPool.push(array);
+  }
+}
+
+module.exports = releaseArray;
+
+},{"lodash._arraypool":37,"lodash._maxpoolsize":38}],37:[function(require,module,exports){
+module.exports=require(35)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.clone/node_modules/lodash._baseclone/node_modules/lodash._getarray/node_modules/lodash._arraypool/index.js":35}],38:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+
+/** Used as the max size of the `arrayPool` and `objectPool` */
+var maxPoolSize = 40;
+
+module.exports = maxPoolSize;
+
+},{}],39:[function(require,module,exports){
+module.exports=require(23)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._slice/index.js":23}],40:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var baseCreateCallback = require('lodash._basecreatecallback'),
+    forOwn = require('lodash.forown');
+
+/**
+ * Iterates over elements of a collection, executing the callback for each
+ * element. The callback is bound to `thisArg` and invoked with three arguments;
+ * (value, index|key, collection). Callbacks may exit iteration early by
+ * explicitly returning `false`.
+ *
+ * Note: As with other "Collections" methods, objects with a `length` property
+ * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
+ * may be used for object iteration.
+ *
+ * @static
+ * @memberOf _
+ * @alias each
+ * @category Collections
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @param {Function} [callback=identity] The function called per iteration.
+ * @param {*} [thisArg] The `this` binding of `callback`.
+ * @returns {Array|Object|string} Returns `collection`.
+ * @example
+ *
+ * _([1, 2, 3]).forEach(function(num) { console.log(num); }).join(',');
+ * // => logs each number and returns '1,2,3'
+ *
+ * _.forEach({ 'one': 1, 'two': 2, 'three': 3 }, function(num) { console.log(num); });
+ * // => logs each number and returns the object (property order is not guaranteed across environments)
+ */
+function forEach(collection, callback, thisArg) {
+  var index = -1,
+      length = collection ? collection.length : 0;
+
+  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);
+  if (typeof length == 'number') {
+    while (++index < length) {
+      if (callback(collection[index], index, collection) === false) {
+        break;
+      }
+    }
+  } else {
+    forOwn(collection, callback);
+  }
+  return collection;
+}
+
+module.exports = forEach;
+
+},{"lodash._basecreatecallback":50,"lodash.forown":41}],41:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var baseCreateCallback = require('lodash._basecreatecallback'),
+    keys = require('lodash.keys'),
+    objectTypes = require('lodash._objecttypes');
+
+/**
+ * Iterates over own enumerable properties of an object, executing the callback
+ * for each property. The callback is bound to `thisArg` and invoked with three
+ * arguments; (value, key, object). Callbacks may exit iteration early by
+ * explicitly returning `false`.
+ *
+ * @static
+ * @memberOf _
+ * @type Function
+ * @category Objects
+ * @param {Object} object The object to iterate over.
+ * @param {Function} [callback=identity] The function called per iteration.
+ * @param {*} [thisArg] The `this` binding of `callback`.
+ * @returns {Object} Returns `object`.
+ * @example
+ *
+ * _.forOwn({ '0': 'zero', '1': 'one', 'length': 2 }, function(num, key) {
+ *   console.log(key);
+ * });
+ * // => logs '0', '1', and 'length' (property order is not guaranteed across environments)
+ */
+var forOwn = function(collection, callback, thisArg) {
+  var index, iterable = collection, result = iterable;
+  if (!iterable) return result;
+  if (!objectTypes[typeof iterable]) return result;
+  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);
+    var ownIndex = -1,
+        ownProps = objectTypes[typeof iterable] && keys(iterable),
+        length = ownProps ? ownProps.length : 0;
+
+    while (++ownIndex < length) {
+      index = ownProps[ownIndex];
+      if (callback(iterable[index], index, collection) === false) return result;
+    }
+  return result
+};
+
+module.exports = forOwn;
+
+},{"lodash._basecreatecallback":50,"lodash._objecttypes":42,"lodash.keys":43}],42:[function(require,module,exports){
+module.exports=require(27)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":27}],43:[function(require,module,exports){
+module.exports=require(28)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash.keys/index.js":28,"lodash._isnative":44,"lodash._shimkeys":45,"lodash.isobject":48}],44:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],45:[function(require,module,exports){
+module.exports=require(30)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash.keys/node_modules/lodash._shimkeys/index.js":30,"lodash._objecttypes":42}],46:[function(require,module,exports){
+/**
+ * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+ * Build: `lodash modularize modern exports="npm" -o ./npm/`
+ * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <http://lodash.com/license>
+ */
+var isNative = require('lodash._isnative');
+
+/** `Object#toString` result shortcuts */
+var arrayClass = '[object Array]';
+
+/** Used for native method references */
+var objectProto = Object.prototype;
+
+/** Used to resolve the internal [[Class]] of values */
+var toString = objectProto.toString;
+
+/* Native method shortcuts for methods with the same name as other `lodash` methods */
+var nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray;
+
+/**
+ * Checks if `value` is an array.
+ *
+ * @static
+ * @memberOf _
+ * @type Function
+ * @category Objects
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if the `value` is an array, else `false`.
+ * @example
+ *
+ * (function() { return _.isArray(arguments); })();
+ * // => false
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ */
+var isArray = nativeIsArray || function(value) {
+  return value && typeof value == 'object' && typeof value.length == 'number' &&
+    toString.call(value) == arrayClass || false;
+};
+
+module.exports = isArray;
+
+},{"lodash._isnative":47}],47:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],48:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":49}],49:[function(require,module,exports){
+module.exports=require(27)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":27}],50:[function(require,module,exports){
+module.exports=require(6)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/index.js":6,"lodash._setbinddata":51,"lodash.bind":54,"lodash.identity":70,"lodash.support":71}],51:[function(require,module,exports){
+module.exports=require(7)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/index.js":7,"lodash._isnative":52,"lodash.noop":53}],52:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],53:[function(require,module,exports){
+module.exports=require(9)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":9}],54:[function(require,module,exports){
+module.exports=require(10)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/index.js":10,"lodash._createwrapper":55,"lodash._slice":69}],55:[function(require,module,exports){
+module.exports=require(11)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/index.js":11,"lodash._basebind":56,"lodash._basecreatewrapper":62,"lodash._slice":69,"lodash.isfunction":68}],56:[function(require,module,exports){
+module.exports=require(12)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/index.js":12,"lodash._basecreate":57,"lodash._setbinddata":51,"lodash._slice":69,"lodash.isobject":60}],57:[function(require,module,exports){
+module.exports=require(13)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash._basecreate/index.js":13,"lodash._isnative":58,"lodash.isobject":60,"lodash.noop":59}],58:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],59:[function(require,module,exports){
+module.exports=require(9)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":9}],60:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":61}],61:[function(require,module,exports){
+module.exports=require(27)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":27}],62:[function(require,module,exports){
+module.exports=require(17)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basecreatewrapper/index.js":17,"lodash._basecreate":63,"lodash._setbinddata":51,"lodash._slice":69,"lodash.isobject":66}],63:[function(require,module,exports){
+module.exports=require(13)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash._basecreate/index.js":13,"lodash._isnative":64,"lodash.isobject":66,"lodash.noop":65}],64:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],65:[function(require,module,exports){
+module.exports=require(9)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash.noop/index.js":9}],66:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":67}],67:[function(require,module,exports){
+module.exports=require(27)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":27}],68:[function(require,module,exports){
+module.exports=require(22)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash.isfunction/index.js":22}],69:[function(require,module,exports){
+module.exports=require(23)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._slice/index.js":23}],70:[function(require,module,exports){
+module.exports=require(24)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.identity/index.js":24}],71:[function(require,module,exports){
+module.exports=require(25)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.support/index.js":25,"lodash._isnative":72}],72:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],73:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10333,7 +11174,7 @@ function compact(array) {
 
 module.exports = compact;
 
-},{}],32:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10377,7 +11218,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"lodash.isnumber":33}],33:[function(require,module,exports){
+},{"lodash.isnumber":75}],75:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10418,7 +11259,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{}],34:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10491,7 +11332,7 @@ function throttle(func, wait, options) {
 
 module.exports = throttle;
 
-},{"lodash.debounce":35,"lodash.isfunction":38,"lodash.isobject":39}],35:[function(require,module,exports){
+},{"lodash.debounce":77,"lodash.isfunction":80,"lodash.isobject":81}],77:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10649,7 +11490,7 @@ function debounce(func, wait, options) {
 
 module.exports = debounce;
 
-},{"lodash.isfunction":38,"lodash.isobject":39,"lodash.now":36}],36:[function(require,module,exports){
+},{"lodash.isfunction":80,"lodash.isobject":81,"lodash.now":78}],78:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="npm" -o ./npm/`
@@ -10679,15 +11520,15 @@ var now = isNative(now = Date.now) && now || function() {
 
 module.exports = now;
 
-},{"lodash._isnative":37}],37:[function(require,module,exports){
-module.exports=require(7)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":7}],38:[function(require,module,exports){
-module.exports=require(21)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash.isfunction/index.js":21}],39:[function(require,module,exports){
-module.exports=require(15)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":15,"lodash._objecttypes":40}],40:[function(require,module,exports){
-module.exports=require(26)
-},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":26}],41:[function(require,module,exports){
+},{"lodash._isnative":79}],79:[function(require,module,exports){
+module.exports=require(8)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash._setbinddata/node_modules/lodash._isnative/index.js":8}],80:[function(require,module,exports){
+module.exports=require(22)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash.isfunction/index.js":22}],81:[function(require,module,exports){
+module.exports=require(16)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._basecreatecallback/node_modules/lodash.bind/node_modules/lodash._createwrapper/node_modules/lodash._basebind/node_modules/lodash.isobject/index.js":16,"lodash._objecttypes":82}],82:[function(require,module,exports){
+module.exports=require(27)
+},{"/home/jim/Documents/code/world-bank-graphing-demo/node_modules/lodash.assign/node_modules/lodash._objecttypes/index.js":27}],83:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -12628,7 +13469,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":2}],42:[function(require,module,exports){
+},{"_process":3}],84:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -13711,7 +14552,7 @@ request.put = function(url, data, fn){
 
 module.exports = request;
 
-},{"emitter":43,"reduce":44}],43:[function(require,module,exports){
+},{"emitter":85,"reduce":86}],85:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -13877,7 +14718,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],44:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -13902,7 +14743,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],45:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 /**
  * Manually add new chart prototypes here.
  */
@@ -13914,7 +14755,7 @@ module.exports = {
         chart: require('./worldBankIndices/chart')
     }
 };
-},{"./worldBankIndices/chart":49,"./worldBankIndices/controls":54,"./worldBankIndices/model":55}],46:[function(require,module,exports){
+},{"./worldBankIndices/chart":92,"./worldBankIndices/controls":97,"./worldBankIndices/model":98}],88:[function(require,module,exports){
 /**
  * Axes functionality.
  *
@@ -13949,7 +14790,7 @@ exports.drawAxes = function() {
 
     // Request a number of x-axis ticks
     // according to css breakpoint.
-    var numTicks = this.isWide() ? 8 : 3;
+    var numTicks = chart.isAtleastMedium() ? 9 : 3;
     xAxisFactory.ticks(numTicks);
 
     xAxisFactory.scale(chart.scales.x);
@@ -13969,29 +14810,29 @@ exports.labelAxes = function() {
     var chart = this;
     var data = chart.data;
 
-    var xLabel = chart.d3Objects.axes.x
-        .append('g')
-        .classed('label xAxis__label', true);
+    ['x', 'y'].forEach(function (axisName) {
+        var d3Axis = chart.d3Objects.axes[axisName];
+        var label = d3Axis.select('.label');
+        var accessor = chart.accessors[axisName];
+        var text;
+        var title;
 
-    var xAccessor = chart.accessors.x;
-    xLabel
-        .append('text')
-        .text(data.indices[xAccessor].descriptor);
-    xLabel
-        .append('title')
-        .text(xAccessor);
+        if (label.size() === 0) {
+            label = d3Axis
+                .append('g')
+                .classed('label ' + axisName + '-axis__label', true);
 
-    var yLabel = chart.d3Objects.axes.y
-        .append('g')
-        .classed('label yAxis__label', true);
+            text = label.append('text');
+            title = label.append('title');
+        } else {
+            text = label.select('text');
+            title = label.select('title');
+        }
 
-    var yAccessor = chart.accessors.y;
-    yLabel
-        .append('text')
-        .text(data.indices[yAccessor].descriptor);
-    yLabel
-        .append('title')
-        .text(yAccessor);
+        text.text(data.indices[accessor].descriptor);
+        title.text(accessor);
+    });
+
 };
 
 
@@ -14009,7 +14850,7 @@ exports.positionAxesLabels = function() {
         .style({'text-anchor': 'middle'});
 };
 
-},{"./helpers":48,"d3":3}],47:[function(require,module,exports){
+},{"./helpers":91,"d3":4}],89:[function(require,module,exports){
 /**
  * Static default configuration for the World Bank indices chart.
  */
@@ -14033,13 +14874,126 @@ module.exports = {
     // Expected breakpoint reference.
     // Values are minimum width in px at which media rule applies.
     breakPoints: {
-        'verynarrow': 0,
-        'narrow': 480,
+        'veryNarrow': 400,
+        'narrow': 520,
         'medium': 768,
         'wide': 1024
     }
 };
-},{}],48:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
+/**
+ * Data points functionality.
+ *
+ * To be mixed into the parent chart prototype.
+ *
+ */
+'use strict';
+
+var d3 = require('d3');
+
+exports.updateDataPoints = function() {
+    var chart = this;
+    var chartArea = chart.d3Objects.chartArea;
+
+    // Update selection.
+    var updateSelection = chartArea
+        .selectAll('g')
+        .data(chart.data.derived, function(d) { return d.region; });
+
+
+    // Exit selection.
+    updateSelection.exit()
+        .remove();
+
+
+    // Enter selection.
+    // Append groups and circles (enter selection entities move to update selection).
+    updateSelection.enter()
+        .append('g')
+        .append('circle')
+            .style({
+                fill: function(d) {return chart.scales.regionColour(d.region); },
+                stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
+            });
+
+    // Update the group locations.
+    updateSelection
+        .transition()
+        .attr({
+            transform: function(d) {
+                return 'translate(' +
+                    chart.scales.x(d.x) +
+                    ',' +
+                     chart.scales.y(d.y) +
+                    ')';
+            }
+        });
+
+    // Update the circle radii.
+    // Note 'select' propagates bound data to
+    // child elements, selectAll does not.
+    updateSelection.select('circle')
+        .transition()
+        .attr({
+            r: function(d) {
+                return chart.scales.z(d.z);
+            }
+        });
+
+    // Add interaction behaviour
+    chart.enableDataPointInteractions(updateSelection);
+};
+
+
+exports.enableDataPointInteractions = function(newDataPoints) {
+    var chart = this;
+
+    newDataPoints.on('mouseover', function() {
+        var node = this;
+        chart.appendTooltip(node);
+
+        // When a data point is interacted with
+        // bring it to the top of the drawing
+        // stack.
+        var parent = this.parentNode;
+        parent.removeChild(this);
+        parent.appendChild(this);
+    });
+
+    newDataPoints.on('mouseout', function() {
+        var tooltip = d3.select(this).select('.tooltip');
+        tooltip.remove();
+    });
+};
+
+
+/**
+ * Update the data point attributes according to
+ * the current chart scales.
+ * @return {undefined}
+ */
+exports.rescaleDataPoints = function() {
+    var chart = this;
+    var dataPoints = this.d3Objects.chartArea.selectAll('g');
+
+    dataPoints
+        .attr({
+            transform: function(d) {
+                return 'translate(' +
+                    chart.scales.x(d.x) +
+                    ',' +
+                     chart.scales.y(d.y) +
+                    ')';
+            }
+        });
+
+    dataPoints.selectAll('circles')
+        .attr({
+            r: function(d) {return chart.scales.z(d.z);}
+        });
+};
+
+},{"d3":4}],91:[function(require,module,exports){
 /**
  * Chart helper functions.
  */
@@ -14064,13 +15018,13 @@ exports.formatValuesFactory = function (symbol) {
                 return d3.format(',f')(d) + symbol;
             case '$':
             case '£':
-                return symbol + d3.format(',s')(d);
+                return symbol + d3.format(',.2s')(d);
             default:
                 return d3.format(',.2s')(d);
         }
     };
 };
-},{"d3":3}],49:[function(require,module,exports){
+},{"d3":4}],92:[function(require,module,exports){
 /**
  * World Bank Indices chart prototype.
  */
@@ -14084,18 +15038,24 @@ var viewModel = require('./viewModel');
 var scales = require('./scales');
 var legend = require('./legend');
 var axes = require('./axes');
+var dataPoints = require('./dataPoints');
 var tooltip = require('./tooltip');
 
 
-// Make the chart type specific config
-// available on the chart prototype
-// before calling this.init() so that the
-// generic chart constructor can use it.
-exports.config = typeConfig;
+var WorldBankIndicatorChartPrototype = module.exports = {};
 
+
+WorldBankIndicatorChartPrototype.config = typeConfig;
+
+_assign(WorldBankIndicatorChartPrototype, viewModel);
+_assign(WorldBankIndicatorChartPrototype, scales);
+_assign(WorldBankIndicatorChartPrototype, legend);
+_assign(WorldBankIndicatorChartPrototype, axes);
+_assign(WorldBankIndicatorChartPrototype, dataPoints);
+_assign(WorldBankIndicatorChartPrototype, tooltip);
 
 // Chart type specific initialisation tasks.
-exports.init = function() {
+WorldBankIndicatorChartPrototype.init = function() {
     var chart = this;
     var d3Objects = chart.d3Objects;
     var d3Svg = d3Objects.svg = d3.select(chart.svg);
@@ -14108,22 +15068,27 @@ exports.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
+};
 
-    // Mix in other functionality.
-    // TODO: make these instantiable so that
-    // 1) They can use dependency injection.
-    // 2) Functionality from a module is explicitly namespaced.
-    _assign(chart, viewModel);
-    _assign(chart, scales);
-    _assign(chart, legend);
-    _assign(chart, axes);
-    _assign(chart, tooltip);
+
+/**
+ * Update Accessors and redraw graph.
+ * Used externally to control graph.
+ * @param {object} newAccessors A set of accessors.
+ */
+WorldBankIndicatorChartPrototype.updateAccessorsAndChart = function(newAccessors) {
+    var chart = this;
+    chart.setAccessors(newAccessors);
+    chart.deriveCurrentData();
+    chart.findDataExtremes();
+    chart.calculateScales();
+    chart.drawChart();
 };
 
 
 // Chart area SVG padding in pixels.
 // Depends on the computed dimensions of the legend.
-exports.setAreaChartPadding = function() {
+WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
     var chart = this;
     var legend = chart.d3Objects.legend;
 
@@ -14139,7 +15104,7 @@ exports.setAreaChartPadding = function() {
 };
 
 
-exports.positionChartElements = function () {
+WorldBankIndicatorChartPrototype.positionChartElements = function () {
     var chart = this;
 
     // Axes and plot shifted right by the padding.
@@ -14162,101 +15127,29 @@ exports.positionChartElements = function () {
  * Draw the graph
  * @return {undefined}
  */
-exports.drawChart = function() {
-    var chart = this;
-
-    chart.drawAxes();
-    chart.labelAxes();
-    chart.positionAxesLabels();
-
-    var chartArea = this.d3Objects.chartArea;
-    var dataPoints = this.d3Objects.dataPoints = chartArea
-        .selectAll('g')
-        .data(this.data.derived)
-        .enter().append('g')
-            .attr({
-                transform: function(d) {
-                    return 'translate(' +
-                        chart.scales.x(d.x) +
-                        ',' +
-                         chart.scales.y(d.y) +
-                        ')';
-                }
-            });
-
-    // Add interaction behaviour
-    // The D3 event API only allows
-    // one event of each type to be
-    // added to an element.
-    chart.enableDatapointInteractions();
-
-    // Add circles to the datapoints.
-    dataPoints.append('circle')
-        .attr({
-            r: function(d) { return chart.scales.z(d.z); }
-        })
-        .style({
-            fill: function(d) {return chart.scales.regionColour(d.region); },
-            stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
-        });
+WorldBankIndicatorChartPrototype.drawChart = function() {
+    this.drawAxes();
+    this.labelAxes();
+    this.positionAxesLabels();
+    this.updateDataPoints();
 };
 
 
-exports.enableDatapointInteractions = function() {
-    var chart = this;
-    var dataPoints = chart.d3Objects.dataPoints;
-
-    dataPoints.on('mouseover', function() {
-        var node = this;
-        chart.appendTooltip(node);
-
-        // When a datapoint is interacted with
-        // bring it to the top of the drawing
-        // stack.
-        var parent = this.parentNode;
-        parent.removeChild(this);
-        parent.appendChild(this);
-    });
-
-    dataPoints.on('mouseout', function() {
-        var tooltip = d3.select(this).select('.tooltip');
-        tooltip.remove();
-    });
+WorldBankIndicatorChartPrototype.isAtleastNarrow = function() {
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.narrow;
 };
 
 
-exports.isWide = function() {
+WorldBankIndicatorChartPrototype.isAtleastMedium = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
 
-/**
- * Update the data point attributes according to
- * the current chart scales.
- * @return {undefined}
- */
-exports.rescaleDataPoints = function() {
-    var chart = this;
-    var dataPoints = this.d3Objects.dataPoints;
-
-    dataPoints
-        .attr({
-            transform: function(d) {
-                return 'translate(' +
-                    chart.scales.x(d.x) +
-                    ',' +
-                     chart.scales.y(d.y) +
-                    ')';
-            }
-        });
-
-    dataPoints.selectAll('circles')
-        .attr({
-            r: function(d) {return chart.scales.z(d.z);}
-        });
+WorldBankIndicatorChartPrototype.isAtleastWide = function() {
+    return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
 };
 
-},{"./axes":46,"./config":47,"./legend":50,"./scales":51,"./tooltip":52,"./viewModel":53,"d3":3,"lodash.assign":4}],50:[function(require,module,exports){
+},{"./axes":88,"./config":89,"./dataPoints":90,"./legend":93,"./scales":94,"./tooltip":95,"./viewModel":96,"d3":4,"lodash.assign":5}],93:[function(require,module,exports){
 /**
  * Legend functionality.
  *
@@ -14316,7 +15209,7 @@ exports.populateLegend = function() {
 
     chart.setLegendRectWidth();
 
-    // TODO: move these text properties to CSS.
+    // Only include region descriptions up to any opening bracket.
     legendRegions.append('text')
         .text(function(d) {return (/[^\()]*/.exec(d))[0];})
         .attr({
@@ -14336,7 +15229,13 @@ exports.resetLegendDimensions = function() {
 // Calculate the current optimum number
 // of columns for the legend.
 exports.numLegendColumns = function() {
-    return this.isWide() ? 3 : 2;
+    var chart = this;
+    if (chart.isAtleastMedium()) {
+        return 3;
+    } else if (chart.isAtleastNarrow()) {
+        return 2;
+    }
+    return 1;
 };
 
 
@@ -14345,7 +15244,11 @@ exports.setLegendWidth = function() {
     var singleColumnEms = 12;
     var numColumns = chart.numLegendColumns();
 
-    chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+    if (numColumns > 1) {
+        chart.legendWidth = chart.baseFontSize * singleColumnEms * numColumns;
+    } else {
+        chart.legendWidth = chart.dimensions.width;
+    }
 };
 
 
@@ -14389,7 +15292,7 @@ exports.positionLegendItems = function () {
         });
 };
 
-},{}],51:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 /**
  * Scales functionality.
  *
@@ -14428,7 +15331,7 @@ exports.calculateScales = function() {
         scales[dimension.toLowerCase()] = d3.scale
             .linear()
             .domain([
-                extremes['min'+dimension] * 0.95,
+                extremes['min'+dimension],
                 extremes['max'+dimension]
             ])
             .nice();
@@ -14438,7 +15341,8 @@ exports.calculateScales = function() {
     scales.y.range([chartDimensions.height - padding.top - padding.bottom, 0]);
     scales.z.range(this.zRange);
 };
-},{"d3":3}],52:[function(require,module,exports){
+
+},{"d3":4}],95:[function(require,module,exports){
 /**
  * Tooltip functionality.
  *
@@ -14532,7 +15436,7 @@ exports.appendTooltip = function(node) {
         })
         .style({'text-anchor': textAnchor});
 };
-},{"./helpers":48,"d3":3}],53:[function(require,module,exports){
+},{"./helpers":91,"d3":4}],96:[function(require,module,exports){
 /**
  * Chart specific model functionality.
  *
@@ -14547,7 +15451,7 @@ var _compact = require('lodash.compact');
 
 /**
  * Set the data accessors for the chart.
- * @param {object} accessors {x:'', y:'', z:''}
+ * @param {object} accessors {x:'', y:'', z:'', year:''}
  */
 exports.setAccessors = function(accessors) {
     if (accessors) {
@@ -14558,10 +15462,57 @@ exports.setAccessors = function(accessors) {
 };
 
 
+/**
+ * Given a year, derive the current data set.
+ * Needs to be called when accessors or year changes.
+ * @return {undefined}
+ */
 exports.deriveCurrentData = function() {
     var chart = this;
-    var data = this.data;
-    var year= '2000'; // TODO map over years.
+    var data = chart.data;
+    var accessors = chart.accessors;
+    var year = accessors.year;
+
+    var derivedData = data.regions.map(function(region) {
+        var values = {
+            region: region,
+            x: parseFloat(data.rawData[region][accessors.x][year]),
+            y: parseFloat(data.rawData[region][accessors.y][year]),
+            z: parseFloat(data.rawData[region][accessors.z][year])
+        };
+
+        // If any of the values are missing then skip
+        // this mark this region and year combination
+        // as false.
+        if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
+            return false;
+        }
+
+        return values;
+    });
+
+    // Record the derived data with falsey values removed.
+    derivedData = _compact(derivedData);
+    if (derivedData.length === 0) {
+        console.warn('No data for accessors', accessors);
+    }
+    data.derived = derivedData;
+};
+
+
+/**
+ * Find the extreme data for the current accessors
+ * over all regions and years.
+ * Needs to be called when index accessors change
+ * but not when year accessor changes.
+ * @return {undfined}
+ */
+exports.findDataExtremes = function() {
+    var chart = this;
+    var data = chart.data;
+    var rawData = data.rawData;
+    var accessors = chart.accessors;
+
     var extremes = {
         minX: undefined,
         maxX: undefined,
@@ -14571,44 +15522,33 @@ exports.deriveCurrentData = function() {
         maxZ: undefined
     };
 
-    var derivedData = data.regions.map(function(region) {
-        var values = {
-            region: region,
-            x: parseFloat(data.rawData[region][chart.accessors.x][year]),
-            y: parseFloat(data.rawData[region][chart.accessors.y][year]),
-            z: parseFloat(data.rawData[region][chart.accessors.z][year])
-        };
-
-        // If any of the values are missing then skip
-        // this region and year combination.
-        if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
-            return false;
-        }
-
-
-        // Find the extremes over all data.
-        ['min', 'max'].forEach(function(extreme) {
+    data.regions.forEach(function (region) {
+        data.years.forEach(function (year) {
             ['X', 'Y', 'Z'].forEach(function(dimension) {
-                var currentValue = values[dimension.toLowerCase()];
-                if (extremes[extreme+dimension] === undefined) {
-                    extremes[extreme+dimension] = currentValue;
-                } else {
-                    extremes[extreme+dimension] = Math[extreme](extremes[extreme+dimension], currentValue);
+                var currentValue = rawData[region][accessors[dimension.toLowerCase()]][year];
+
+                // If any of the x, y or z value are undefined for
+                // this region and year then skip this value.
+                if (_isNaN(currentValue)) {
+                    return false;
                 }
+
+                ['min', 'max'].forEach(function(extreme) {
+                    if (extremes[extreme+dimension] === undefined) {
+                        extremes[extreme+dimension] = currentValue;
+                    } else {
+                        extremes[extreme+dimension] = Math[extreme](extremes[extreme+dimension], currentValue);
+                    }
+                });
             });
         });
-
-        return values;
     });
 
-    // Record the derived data with falsey values removed.
-    data.derived = _compact(derivedData);
-
-    // Record the extreme data values.
+    // Record the extreme data.
     data.extremes = extremes;
 };
 
-},{"lodash.compact":31,"lodash.isnan":32}],54:[function(require,module,exports){
+},{"lodash.compact":73,"lodash.isnan":74}],97:[function(require,module,exports){
 /**
  * Chart type sepecific controls logic.
  *
@@ -14616,20 +15556,276 @@ exports.deriveCurrentData = function() {
  */
 'use strict';
 
-// require d3
+var d3 = require('d3');
+var _assign = require('lodash.assign');
+var _clone = require('lodash.clone');
+
+var inputNamesMap = {
+    horizontal: 'x',
+    vertical: 'y',
+    radius: 'z',
+    yearSelect: 'year'
+};
+
+
+var WorldBankIndicatorControlsPrototype = module.exports = {};
+
+
+/**
+ * Chart-type specific initialisation tasks.
+ * @param  {object} options Options for the chart controls.
+ * @return {undefined}
+ */
+WorldBankIndicatorControlsPrototype.init = function(options) {
+    var controls = this;
+    var d3Objects = controls.d3Objects;
+
+    var form = d3Objects.form = d3.select(controls.form);
+
+    // Controls.
+    d3Objects.horizontal = form.select('#' + options.idSelectHorizontal);
+    d3Objects.vertical = form.select('#' + options.idSelectVertical);
+    d3Objects.radius = form.select('#' + options.idSelectRadius);
+    var yearRange = d3Objects.yearRange = form.select('#' + options.idRangeYear);
+    var yearSelect = d3Objects.yearSelect = form.select('#' + options.idSelectYear);
+
+    // Dynamic control labelling.
+    // Get D3 references to the min-year span and the max-year span.
+    ['Min', 'Max'].forEach(function (extreme) {
+        d3Objects['year' + extreme + 'Span'] = d3.select(yearSelect.node().parentNode)
+            .select('.' + options['class' + extreme + 'Year']);
+    });
+
+    // Activate two way binding between the year range and year select controls.
+    // Note: Firefox currently seems to be firing 'input' twice on range inputs.
+    twowayValueBind(yearRange, yearSelect, 'input');
+};
+
+
+WorldBankIndicatorControlsPrototype.addDomEventListeners = function() {
+    var controls = this;
+    var d3Objects = this.d3Objects;
+
+    // Generate a function which updates
+    // the accessors with new values.
+    function updateAccessorFactory(selectInput) {
+         return function updateAccessor() {
+            /* jshint validthis: true */
+
+            var element = this;
+            var newAccessors = {};
+            newAccessors[inputNamesMap[selectInput]] = element.value;
+            controls.setAccessors(newAccessors);
+        };
+    }
+
+    ['horizontal', 'vertical', 'radius', 'yearSelect'].forEach(function(selectInput) {
+        var d3SelectEl = d3Objects[selectInput];
+        var node = d3SelectEl.node();
+        var callback = updateAccessorFactory(selectInput);
+
+        // Listen to change events on the input elements.
+        node.addEventListener('change', callback);
+
+        // Listen to programmatically fired change events.
+        // The name is different from 'change' to avoid recursive event calling in Firefox.
+        node.addEventListener('programmaticChange', callback);
+    });
+};
+
+
+/**
+ * Set the data accessors for the chart.
+ * @param {object} accessors {x:'', y:'', z:'', year:''}
+ */
+WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
+    var controls = this;
+
+    // If there was no argument then use the defaults.
+    if (!newAccessors) {
+        controls.accessors = controls.defaultAccessors;
+        return;
+    }
+
+    // If the new accessors are the same as the current do nothing.
+    if (Object.keys(newAccessors).every(function (key) {
+        return controls.accessors[key] === newAccessors[key];
+    })) {
+        return;
+    }
+
+    // Else mix the supplied accessors with the current accessors
+    _assign(controls.accessors, newAccessors);
+
+    // Falling back to defaults for missing values.
+    controls.accessors = _assign(_clone(controls.defaultAccessors), controls.accessors);
+
+    controls.emit('accessorsUpdated', _clone(controls.accessors));
+};
+
 
 /**
  * Populate the UI controls with appropriate data.
  * @param  {object} data The chart data.
+ * @param  {object} defaultAccessors The chart default accessors.
  * @return {undefined}
  */
-exports.populate = function(data) {
-    console.warn('implement me');
+WorldBankIndicatorControlsPrototype.populate = function(data, accessors) {
+    this.populateIndices(data, accessors);
+    this.populateYears(data, accessors);
 };
 
-// on change function updateAccessors
-// on change function updateYear
-},{}],55:[function(require,module,exports){
+
+// Indices select options.
+WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) {
+    var d3Objects = this.d3Objects;
+
+
+    // The key is needed to match on default values passed in
+    // to the controls constructor. The descriptor is needed
+    // so that the options in the select inputs are
+    // 1) Shortish and
+    // 2) Match the axes labels on the graph itself.
+    var indices = Object.keys(data.indices).map(function(key) {
+        return {
+            name: key,
+            value: data.indices[key].descriptor
+        };
+    });
+
+    ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
+        var d3SelectEl = d3Objects[dimension];
+        var defaultValue = accessors[inputNamesMap[dimension]];
+        appendOptions(d3SelectEl, indices, defaultValue);
+    });
+};
+
+
+// Years control options.
+WorldBankIndicatorControlsPrototype.populateYears = function(data, accessors) {
+    var d3Objects = this.d3Objects;
+    var years = data.years;
+    var year = accessors.year;
+    var minYear = years[0];
+    var maxYear = years[years.length-1];
+
+    // Year min-max hints.
+    d3Objects.yearMinSpan.text(minYear);
+    d3Objects.yearMaxSpan.text(maxYear);
+
+    // years range control.
+    d3Objects.yearRange
+        .attr({
+            min: function() {return minYear;},
+            max: function() {return maxYear;},
+            value: year,
+            step: 1
+        });
+
+    // Years select.
+    appendOptions(d3Objects.yearSelect, years, year);
+};
+
+
+/**
+ * Given a chart object bind control events to chart methods.
+ * Called in the context where the controls are instantiated.
+ * @param {Chart Object} chart The chart object to control.
+ * @return {undefined}
+ */
+WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
+    var controls = this;
+
+    // EventEmitter event.
+    controls.on('accessorsUpdated', chart.updateAccessorsAndChart.bind(chart));
+};
+
+
+/* Helpers. */
+
+
+/**
+ * Provide 'onChange' value binding between two D3 objects representing input controls.
+ * @param  {object} d3El1 D3 object representing the first input control.
+ * @param  {object} d3El2 D3 object representing the second input control.
+ * @param  {string} event1 Optional event type to bind to element 1.
+ * @param  {string} event2 Optional event type to bind to element 2.
+ * @return {undefined}
+ */
+function twowayValueBind(d3El1, d3El2, event1, event2) {
+    event1 = event1 || 'change';
+    event2 = event2 || 'change';
+
+    // Use the DOM event API because the D3 event API
+    // only allows one binding of each event type
+    // without using D3 sepecific 'namespacing' notation.
+    d3El1.node().addEventListener(event1, bindValueFactory(d3El2, event1));
+    d3El2.node().addEventListener(event2, bindValueFactory(d3El1, event2));
+}
+
+
+/**
+ * Given a D3 object representing an input control return a function
+ * which copies that controls value to another element, for use with
+ * an event listener.
+ * @param  {object} d3El D3 object representing an input control.
+ * @return {undefined}
+ */
+function bindValueFactory(d3El, eventType) {
+    return function() {
+        var otherEl = this;
+        var event;
+        d3El.property('value', otherEl.value);
+
+        // For non-change events fire a programmatic custom
+        // event on the modified input element.
+        if (eventType !== 'change') {
+            event = document.createEvent('Event');
+            event.initEvent('programmaticChange', true, true);
+            d3El.node().dispatchEvent(event);
+        }
+    };
+}
+
+
+/**
+ * Given a D3 reference to a select element populate its options
+ * according the values in the data array.
+ * @param  {object} d3SelectEl A D3 selection representing a select element.
+ * @param  {array} data       An arrray of data to populate the options with.
+ * @return {undefined}
+ */
+function appendOptions(d3SelectEl, data, defaultValue) {
+    d3SelectEl.selectAll('option')
+            .data(data)
+            .enter()
+                .append('option')
+                    .attr({
+                        value: getName,
+                        title: getName,
+                        selected: function(d) {
+                            var value = getName(d);
+                            return defaultValue === value ? 'select' : null;
+                        }
+                    })
+                    .text(function(d) {return getValue(d);});
+
+    // Datum can be strings or objects containing 'name' and 'value' properties.
+    function getKey(key, d) {
+        if (typeof d === 'object') {
+            return d[key];
+        }
+        return d;
+    }
+    function getName(d) {
+        return getKey('name', d);
+    }
+    function getValue(d) {
+        return getKey('value', d);
+    }
+}
+
+},{"d3":4,"lodash.assign":5,"lodash.clone":32}],98:[function(require,module,exports){
 /**
  * Chart type sepecific model logic.
  *
@@ -14637,7 +15833,9 @@ exports.populate = function(data) {
  */
 'use strict';
 
-exports.addRawData = function(rawData) {
+var WorldBankIndicatorModelPrototype = module.exports = {};
+
+WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
     var data = this.data = {};
 
     // rawData[region][index] == [{year:, value:},{year:, value:},...]
@@ -14691,7 +15889,7 @@ exports.addRawData = function(rawData) {
     data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
 };
 
-},{}],56:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 /**
  * Chart module initialisation, housekeeping, event listeners.
  *
@@ -14743,7 +15941,7 @@ function Chart(chartOptions, model) {
     Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
 
 
-    // Chart object properties expected to exist (just here as a hint).
+    // Chart object properties expected to exist.
     chart.accessors = {};
     chart.baseFontSize = false;
     chart.legendWidth = 0;
@@ -14778,8 +15976,10 @@ function Chart(chartOptions, model) {
     }
 
     // Data operations.
+    // Defaults to default accessors.
     chart.setAccessors();
     chart.deriveCurrentData();
+    chart.findDataExtremes();
 
     // Ordinal scales only dependent on the data.
     chart.calculateOrdinalScales();
@@ -14983,15 +16183,15 @@ function getbreakpointWidth() {
 
     return breakpointWidth;
 }
-},{"../chart-types":45,"lodash.assign":4}],57:[function(require,module,exports){
+},{"../chart-types":87,"lodash.assign":5}],100:[function(require,module,exports){
 /**
  * The shared model.
  */
 'use strict';
 
-var _assign = require('lodash.assign');
+var EventEmitter = require('events').EventEmitter;
 
-// TODO require events ?
+var _assign = require('lodash.assign');
 
 var chartPrototypes = require('../chart-types');
 
@@ -15000,6 +16200,7 @@ module.exports = Controls;
 
 function Controls(controlOptions, model) {
     var controls = this;
+
 
     // Cope with lack of 'new' keyword.
     if (!(controls instanceof Controls)){
@@ -15014,26 +16215,55 @@ function Controls(controlOptions, model) {
         throw new TypeError('Please suppply a model for the controls.');
     }
 
+
     controls.id = controlOptions.id;
     controls.form = controlOptions.form;
+
+
+    // References to expected properties.
+    controls.d3Objects = {};
+    controls.accessors = {};
+
+    // Configuration passed in through options.
+    controls.defaultAccessors = controlOptions.defaultAccessors;
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
     _assign(Controls.prototype, chartPrototypes[controlOptions.chartType].controls);
 
-    controls.populate(model.getData());
+    // Extend the controls object with the EventEmitter functionality.
+    EventEmitter.call(controls);
+    _assign(Controls.prototype, EventEmitter.prototype);
 
-    // TODO, some sort of generic 'controls updated' function
-    // that the specific implementation can call and which
-    // fires the event?
+
+    // Control chart-type initialisation tasks.
+    controls.init(controlOptions);
+
+    // Set the default accessors
+    controls.setAccessors();
+
+    // Using the model add appropriate options to the controls.
+    controls.populate(model.getData(), controls.accessors);
+
+    // Add the listeners for the DOM events on the controls.
+    controls.addDomEventListeners();
 }
+
+
+Controls.prototype.init = function() {
+    console.warn('Controls.init has not been overriden with a chart type specific method.');
+};
 
 
 Controls.prototype.populate = function() {
     console.warn('Controls.populate has not been overriden with a chart type specific method.');
 };
-},{"../chart-types":45,"lodash.assign":4}],58:[function(require,module,exports){
+
+Controls.prototype.addHooks = function() {
+    console.warn('Controls.addHooks has not been overriden with a chart type specific method.');
+};
+},{"../chart-types":87,"events":2,"lodash.assign":5}],101:[function(require,module,exports){
 /**
  * The shared model.
  */
@@ -15077,7 +16307,7 @@ Model.prototype.getData = function() {
     return this.data;
 };
 
-},{"../chart-types":45,"lodash.assign":4}],59:[function(require,module,exports){
+},{"../chart-types":87,"lodash.assign":5}],102:[function(require,module,exports){
 /**
  * Data service module.
  *
@@ -15106,4 +16336,4 @@ function getData(dataUrlPath) {
 
     return deferred.promise;
 }
-},{"q":41,"superagent":42}]},{},[1]);
+},{"q":83,"superagent":84}]},{},[1]);

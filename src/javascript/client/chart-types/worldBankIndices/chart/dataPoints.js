@@ -35,7 +35,7 @@ exports.updateDataPoints = function() {
 
     // Update the group locations.
     updateSelection
-        .transition()
+        .transition(1000)
         .attr({
             transform: function(d) {
                 return 'translate(' +
@@ -50,7 +50,7 @@ exports.updateDataPoints = function() {
     // Note 'select' propagates bound data to
     // child elements, selectAll does not.
     updateSelection.select('circle')
-        .transition()
+        .transition(1000)
         .attr({
             r: function(d) {
                 return chart.scales.z(d.z);

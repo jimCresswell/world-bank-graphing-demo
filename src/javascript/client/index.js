@@ -24,14 +24,15 @@ var modelOptions = {
 // because chart should be instantiable and controllable without
 // instantiaying UI controls.
 var defaultAccessors = {
-    x: 'Literacy rate, adult total (% of people ages 15 and above)',
-    y: 'GDP growth (annual %)',
-    z: 'Population, total',
+    x: 'Population, total',
+    y: 'Life expectancy at birth, total (years)',
+    z: 'GDP per capita (current US$)',
     year: '2010'
 };
-//'Life expectancy at birth, total (years)',
-//'Unemployment, total (% of total labor force) (modeled ILO estimate)',
-//'Inflation, GDP deflator (annual %)',
+// 'CO2 emissions (metric tons per capita)',
+// 'Life expectancy at birth, total (years)',
+// 'Unemployment, total (% of total labor force) (modeled ILO estimate)',
+// 'Inflation, GDP deflator (annual %)',
 
 var controlOptions = {
     chartType: 'worldBankIndices',

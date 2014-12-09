@@ -19,8 +19,8 @@ exports.updateDataPoints = function() {
 
 
     // Exit selection.
-    // TODO: Once a point is present it's not anticpated to
-    // be missing see https://github.com/jimCresswell/world-bank-graphing-demo/issues/32
+    updateSelection.exit()
+        .remove();
 
 
     // Enter selection.
@@ -35,6 +35,7 @@ exports.updateDataPoints = function() {
 
     // Update the group locations.
     updateSelection
+        .transition()
         .attr({
             transform: function(d) {
                 return 'translate(' +
@@ -46,7 +47,10 @@ exports.updateDataPoints = function() {
         });
 
     // Update the circle radii.
-    updateSelection.selectAll('circle')
+    // Note 'select' propagates bound data to
+    // child elements, selectAll does not.
+    updateSelection.select('circle')
+        .transition()
         .attr({
             r: function(d) {
                 return chart.scales.z(d.z);

@@ -24,11 +24,14 @@ var modelOptions = {
 // because chart should be instantiable and controllable without
 // instantiaying UI controls.
 var defaultAccessors = {
-    x: 'Population, total',
-    y: 'Literacy rate, adult total (% of people ages 15 and above)',
-    z: 'Internet users (per 100 people)',
-    year: '2000'
+    x: 'Literacy rate, adult total (% of people ages 15 and above)',
+    y: 'GDP growth (annual %)',
+    z: 'Population, total',
+    year: '2010'
 };
+//'Life expectancy at birth, total (years)',
+//'Unemployment, total (% of total labor force) (modeled ILO estimate)',
+//'Inflation, GDP deflator (annual %)',
 
 var controlOptions = {
     chartType: 'worldBankIndices',
@@ -47,7 +50,7 @@ var chartOptions = {
     chartType: 'worldBankIndices',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
-    zRange: [10, 40]
+    zRange: [10, 30]
 };
 
 

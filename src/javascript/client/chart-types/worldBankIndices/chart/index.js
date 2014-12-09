@@ -60,6 +60,7 @@ WorldBankIndicatorChartPrototype.updateAccessors = function(newAccessors) {
 
     // If indicators changed
     chart.findDataExtremes();
+    chart.calculateScales();
     chart.drawChart();
 };
 

@@ -22,7 +22,7 @@ exports.formatValuesFactory = function (symbol) {
                 return d3.format(',f')(d) + symbol;
             case '$':
             case '£':
-                return symbol + d3.format(',s')(d);
+                return symbol + d3.format(',.2s')(d);
             default:
                 return d3.format(',.2s')(d);
         }

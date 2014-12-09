@@ -36,7 +36,7 @@ exports.calculateScales = function() {
         scales[dimension.toLowerCase()] = d3.scale
             .linear()
             .domain([
-                extremes['min'+dimension] * 0.95,
+                extremes['min'+dimension],
                 extremes['max'+dimension]
             ])
             .nice();

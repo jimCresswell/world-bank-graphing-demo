@@ -1,6 +1,7 @@
 /* Default circle fill colour */
 .chart--world-bank-indices circle {
     fill: blue;
+    opacity: 0.8;
 }
 
 /* Axis label */

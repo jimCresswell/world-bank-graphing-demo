@@ -5,8 +5,8 @@
  */
 'use strict';
 
-
 var d3 = require('d3');
+
 
 var dimensionNamesMap = {
     horizontal: 'x',
@@ -108,6 +108,31 @@ exports.populateYears = function(data, defaultAccessors) {
 };
 
 
+exports.addHooks = function(chart) {
+    var controls = this;
+
+    // DEBUG
+    controls.on = function() {};
+
+    controls.on('accessorsUpdated', function(event) {
+        var newAccessors = event.data;
+
+        // Limited knowledge of Chart API within a known chart-type.
+        chart.updateAccessors(newAccessors);
+    });
+
+    controls.on('yearUpdated', function(event) {
+        var year = event.data;
+
+        // Limited knowledge of Chart API within a known chart-type.
+        chart.updateYear(year);
+    });
+};
+
+
+/* Helpers. */
+
+
 /**
  * Provide 'onChange' value binding between two D3 objects representing input controls.
  * @param  {object} d3El1 D3 object representing the first input control.
@@ -140,10 +165,6 @@ function bindValueFactory(d3El) {
         d3El.property('value', otherEl.value);
     };
 }
-
-
-
-/* Helpers. */
 
 
 /**

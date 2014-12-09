@@ -64,3 +64,7 @@ Controls.prototype.init = function() {
 Controls.prototype.populate = function() {
     console.warn('Controls.populate has not been overriden with a chart type specific method.');
 };
+
+Controls.prototype.addHooks = function() {
+    console.warn('Controls.addHooks has not been overriden with a chart type specific method.');
+};

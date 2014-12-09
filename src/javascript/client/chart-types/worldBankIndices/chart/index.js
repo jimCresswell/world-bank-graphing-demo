@@ -11,6 +11,7 @@ var viewModel = require('./viewModel');
 var scales = require('./scales');
 var legend = require('./legend');
 var axes = require('./axes');
+var dataPoints = require('./dataPoints');
 var tooltip = require('./tooltip');
 
 
@@ -44,7 +45,39 @@ exports.init = function() {
     _assign(chart, scales);
     _assign(chart, legend);
     _assign(chart, axes);
+    _assign(chart, dataPoints);
     _assign(chart, tooltip);
+};
+
+
+/**
+ * Update Accessors and redraw graph.
+ * Used externally to control graph.
+ * @param {object} newAccessors A set of accessors.
+ */
+exports.updateAccessors = function(newAccessors) {
+    var chart = this;
+    chart.setAccessors(newAccessors);
+    chart.deriveCurrentData();
+    chart.findDataExtremes();
+
+    // Redraw the chart.
+    chart.drawChart();
+};
+
+
+/**
+ * Update the year in the accessors and redraw the data points.
+ * Used externally to control graph.
+ * @param {string} yaer A year string.
+ */
+exports.updateYear = function(newYear) {
+    var chart = this;
+    chart.accessors.year = newYear;
+    chart.deriveCurrentData();
+
+    // Rebind the chart data and redraw the data points.
+    chart.updateDataPoints();
 };
 
 
@@ -90,65 +123,10 @@ exports.positionChartElements = function () {
  * @return {undefined}
  */
 exports.drawChart = function() {
-    var chart = this;
-
-    chart.drawAxes();
-    chart.labelAxes();
-    chart.positionAxesLabels();
-
-    var chartArea = this.d3Objects.chartArea;
-    var dataPoints = this.d3Objects.dataPoints = chartArea
-        .selectAll('g')
-        .data(this.data.derived)
-        .enter().append('g')
-            .attr({
-                transform: function(d) {
-                    return 'translate(' +
-                        chart.scales.x(d.x) +
-                        ',' +
-                         chart.scales.y(d.y) +
-                        ')';
-                }
-            });
-
-    // Add interaction behaviour
-    // The D3 event API only allows
-    // one event of each type to be
-    // added to an element.
-    chart.enableDatapointInteractions();
-
-    // Add circles to the datapoints.
-    dataPoints.append('circle')
-        .attr({
-            r: function(d) { return chart.scales.z(d.z); }
-        })
-        .style({
-            fill: function(d) {return chart.scales.regionColour(d.region); },
-            stroke: function(d) {return chart.scales.regionColour(d.region).darker(); }
-        });
-};
-
-
-exports.enableDatapointInteractions = function() {
-    var chart = this;
-    var dataPoints = chart.d3Objects.dataPoints;
-
-    dataPoints.on('mouseover', function() {
-        var node = this;
-        chart.appendTooltip(node);
-
-        // When a datapoint is interacted with
-        // bring it to the top of the drawing
-        // stack.
-        var parent = this.parentNode;
-        parent.removeChild(this);
-        parent.appendChild(this);
-    });
-
-    dataPoints.on('mouseout', function() {
-        var tooltip = d3.select(this).select('.tooltip');
-        tooltip.remove();
-    });
+    this.drawAxes();
+    this.labelAxes();
+    this.positionAxesLabels();
+    this.updateDataPoints();
 };
 
 
@@ -156,36 +134,12 @@ exports.isAtleastNarrow = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.narrow;
 };
 
+
 exports.isAtleastMedium = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.medium;
 };
 
+
 exports.isAtleastWide = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
-};
-
-/**
- * Update the data point attributes according to
- * the current chart scales.
- * @return {undefined}
- */
-exports.rescaleDataPoints = function() {
-    var chart = this;
-    var dataPoints = this.d3Objects.dataPoints;
-
-    dataPoints
-        .attr({
-            transform: function(d) {
-                return 'translate(' +
-                    chart.scales.x(d.x) +
-                    ',' +
-                     chart.scales.y(d.y) +
-                    ')';
-            }
-        });
-
-    dataPoints.selectAll('circles')
-        .attr({
-            r: function(d) {return chart.scales.z(d.z);}
-        });
 };

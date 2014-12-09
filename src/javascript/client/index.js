@@ -84,8 +84,7 @@ function init(data) {
     controls = new Controls(controlOptions, model);
     chart = new Chart(chartOptions, model);
 
-    // TODO bind changes in the controls to the chart update functionality.
-    // Possibly using events?
+    controls.addHooks(chart);
 
     // Re-style the chart on resize.
     addResizeListener(chart);

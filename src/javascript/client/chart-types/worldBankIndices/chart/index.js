@@ -49,16 +49,10 @@ WorldBankIndicatorChartPrototype.init = function() {
  * Used externally to control graph.
  * @param {object} newAccessors A set of accessors.
  */
-WorldBankIndicatorChartPrototype.updateAccessors = function(newAccessors) {
+WorldBankIndicatorChartPrototype.updateAccessorsAndChart = function(newAccessors) {
     var chart = this;
     chart.setAccessors(newAccessors);
     chart.deriveCurrentData();
-
-    // TODO: differentiate between indicators changing and just year changing.
-    // If just year changed.
-    //chart.updateDataPoints();
-
-    // If indicators changed
     chart.findDataExtremes();
     chart.calculateScales();
     chart.drawChart();
@@ -75,7 +69,7 @@ WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
 
     chart.padding = {
         top: 50 + legendDimensions.height,
-        right: 20,
+        right: 30,
         bottom: 50,
         yAxis: 65
     };

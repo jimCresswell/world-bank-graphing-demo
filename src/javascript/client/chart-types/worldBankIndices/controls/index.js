@@ -13,7 +13,8 @@ var inputNamesMap = {
     horizontal: 'x',
     vertical: 'y',
     radius: 'z',
-    yearSelect: 'year'
+    yearSelect: 'year',
+    yearRange: 'year'
 };
 
 
@@ -93,6 +94,7 @@ WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
     // If there was no argument then use the defaults.
     if (!newAccessors) {
         controls.accessors = controls.defaultAccessors;
+        controls.setControlTitles(controls.accessors);
         return;
     }
 
@@ -109,7 +111,20 @@ WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
     // Falling back to defaults for missing values.
     controls.accessors = _assign(_clone(controls.defaultAccessors), controls.accessors);
 
+    // Set the titles on the input elements.
+    controls.setControlTitles(controls.accessors);
+
     controls.emit('accessorsUpdated', _clone(controls.accessors));
+};
+
+
+WorldBankIndicatorControlsPrototype.setControlTitles = function(accessors) {
+    var d3Objects = this.d3Objects;
+
+    ['horizontal', 'vertical', 'radius', 'yearSelect', 'yearRange'].forEach(function(inputName) {
+        var controlEl = d3Objects[inputName].node();
+        controlEl.setAttribute('title', accessors[inputNamesMap[inputName]]);
+    });
 };
 
 
@@ -186,7 +201,7 @@ WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
     var controls = this;
 
     // EventEmitter event.
-    controls.on('accessorsUpdated', chart.updateAccessors.bind(chart));
+    controls.on('accessorsUpdated', chart.updateAccessorsAndChart.bind(chart));
 };
 
 
@@ -254,7 +269,11 @@ function appendOptions(d3SelectEl, data, defaultValue) {
                         title: getName,
                         selected: function(d) {
                             var value = getName(d);
-                            return defaultValue === value ? 'select' : null;
+                            var isDefault = defaultValue === value;
+
+                            // Set the select attribute on the default option.
+                            // The atttribute won't be created for a null value.
+                            return isDefault ? 'select' : null;
                         }
                     })
                     .text(function(d) {return getValue(d);});

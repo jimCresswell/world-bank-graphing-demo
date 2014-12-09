@@ -54,25 +54,31 @@ exports.labelAxes = function() {
 
     ['x', 'y'].forEach(function (axisName) {
         var d3Axis = chart.d3Objects.axes[axisName];
-        var label = d3Axis.select('.label');
+        var d3LabelEl = d3Axis.select('.label');
         var accessor = chart.accessors[axisName];
-        var text;
-        var title;
+        var d3TextEl;
+        var d3TitleEl;
 
-        if (label.size() === 0) {
-            label = d3Axis
+        // If the accessor name is very long label
+        // the axis with the accessor descriptor,
+        // the label title attribute will still
+        // contain the full accessor name.
+        var labelString = accessor.length > 40 ? data.indices[accessor].descriptor : accessor;
+
+        if (d3LabelEl.size() === 0) {
+            d3LabelEl = d3Axis
                 .append('g')
                 .classed('label ' + axisName + '-axis__label', true);
 
-            text = label.append('text');
-            title = label.append('title');
+            d3TextEl = d3LabelEl.append('text');
+            d3TitleEl = d3LabelEl.append('title');
         } else {
-            text = label.select('text');
-            title = label.select('title');
+            d3TextEl = d3LabelEl.select('text');
+            d3TitleEl = d3LabelEl.select('title');
         }
 
-        text.text(data.indices[accessor].descriptor);
-        title.text(accessor);
+        d3TextEl.text(labelString);
+        d3TitleEl.text(accessor);
     });
 
 };

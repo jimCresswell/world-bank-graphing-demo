@@ -25,14 +25,15 @@ var modelOptions = {
 // because chart should be instantiable and controllable without
 // instantiaying UI controls.
 var defaultAccessors = {
-    x: 'Literacy rate, adult total (% of people ages 15 and above)',
-    y: 'GDP growth (annual %)',
-    z: 'Population, total',
+    x: 'Population, total',
+    y: 'Life expectancy at birth, total (years)',
+    z: 'GDP per capita (current US$)',
     year: '2010'
 };
-//'Life expectancy at birth, total (years)',
-//'Unemployment, total (% of total labor force) (modeled ILO estimate)',
-//'Inflation, GDP deflator (annual %)',
+// 'CO2 emissions (metric tons per capita)',
+// 'Life expectancy at birth, total (years)',
+// 'Unemployment, total (% of total labor force) (modeled ILO estimate)',
+// 'Inflation, GDP deflator (annual %)',
 
 var controlOptions = {
     chartType: 'worldBankIndices',
@@ -14812,25 +14813,31 @@ exports.labelAxes = function() {
 
     ['x', 'y'].forEach(function (axisName) {
         var d3Axis = chart.d3Objects.axes[axisName];
-        var label = d3Axis.select('.label');
+        var d3LabelEl = d3Axis.select('.label');
         var accessor = chart.accessors[axisName];
-        var text;
-        var title;
+        var d3TextEl;
+        var d3TitleEl;
 
-        if (label.size() === 0) {
-            label = d3Axis
+        // If the accessor name is very long label
+        // the axis with the accessor descriptor,
+        // the label title attribute will still
+        // contain the full accessor name.
+        var labelString = accessor.length > 40 ? data.indices[accessor].descriptor : accessor;
+
+        if (d3LabelEl.size() === 0) {
+            d3LabelEl = d3Axis
                 .append('g')
                 .classed('label ' + axisName + '-axis__label', true);
 
-            text = label.append('text');
-            title = label.append('title');
+            d3TextEl = d3LabelEl.append('text');
+            d3TitleEl = d3LabelEl.append('title');
         } else {
-            text = label.select('text');
-            title = label.select('title');
+            d3TextEl = d3LabelEl.select('text');
+            d3TitleEl = d3LabelEl.select('title');
         }
 
-        text.text(data.indices[accessor].descriptor);
-        title.text(accessor);
+        d3TextEl.text(labelString);
+        d3TitleEl.text(accessor);
     });
 
 };
@@ -14918,7 +14925,7 @@ exports.updateDataPoints = function() {
 
     // Update the group locations.
     updateSelection
-        .transition()
+        .transition(1000)
         .attr({
             transform: function(d) {
                 return 'translate(' +
@@ -14933,7 +14940,7 @@ exports.updateDataPoints = function() {
     // Note 'select' propagates bound data to
     // child elements, selectAll does not.
     updateSelection.select('circle')
-        .transition()
+        .transition(1000)
         .attr({
             r: function(d) {
                 return chart.scales.z(d.z);
@@ -15096,7 +15103,7 @@ WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
 
     chart.padding = {
         top: 50 + legendDimensions.height,
-        right: 20,
+        right: 30,
         bottom: 50,
         yAxis: 65
     };
@@ -15403,11 +15410,13 @@ exports.appendTooltip = function(node) {
     // Append the indices descriptors and values content
     // with a vertical offset.
     ['x','y','z'].forEach(function(dimension, i) {
-        var indexObject = chart.data.indices[chart.accessors[dimension]];
-        var descriptor = indexObject.descriptor;
-        var formatter = formatValuesFactory(indexObject.symbol);
+        var accessor = chart.accessors[dimension]
+        var indicatorObject = chart.data.indices[accessor];
+        var descriptor = indicatorObject.descriptor;
+        var labelString = accessor.length > 40 ? descriptor : accessor;
+        var formatter = formatValuesFactory(indicatorObject.symbol);
         tooltip.append('text')
-            .text(function(d) {return descriptor + ': ' + formatter(d[dimension]);})
+            .text(function(d) {return labelString + ': ' + formatter(d[dimension]);})
             .attr({
                y: 20*(i+1)
             });
@@ -15564,7 +15573,8 @@ var inputNamesMap = {
     horizontal: 'x',
     vertical: 'y',
     radius: 'z',
-    yearSelect: 'year'
+    yearSelect: 'year',
+    yearRange: 'year'
 };
 
 
@@ -15644,6 +15654,7 @@ WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
     // If there was no argument then use the defaults.
     if (!newAccessors) {
         controls.accessors = controls.defaultAccessors;
+        controls.setControlTitles(controls.accessors);
         return;
     }
 
@@ -15660,7 +15671,20 @@ WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
     // Falling back to defaults for missing values.
     controls.accessors = _assign(_clone(controls.defaultAccessors), controls.accessors);
 
+    // Set the titles on the input elements.
+    controls.setControlTitles(controls.accessors);
+
     controls.emit('accessorsUpdated', _clone(controls.accessors));
+};
+
+
+WorldBankIndicatorControlsPrototype.setControlTitles = function(accessors) {
+    var d3Objects = this.d3Objects;
+
+    ['horizontal', 'vertical', 'radius', 'yearSelect', 'yearRange'].forEach(function(inputName) {
+        var controlEl = d3Objects[inputName].node();
+        controlEl.setAttribute('title', accessors[inputNamesMap[inputName]]);
+    });
 };
 
 
@@ -15805,7 +15829,11 @@ function appendOptions(d3SelectEl, data, defaultValue) {
                         title: getName,
                         selected: function(d) {
                             var value = getName(d);
-                            return defaultValue === value ? 'select' : null;
+                            var isDefault = defaultValue === value;
+
+                            // Set the select attribute on the default option.
+                            // The atttribute won't be created for a null value.
+                            return isDefault ? 'select' : null;
                         }
                     })
                     .text(function(d) {return getValue(d);});

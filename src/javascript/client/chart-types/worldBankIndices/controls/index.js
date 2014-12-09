@@ -41,7 +41,7 @@ exports.init = function(options) {
     });
 
     // Activate two way binding between the year range and year select controls.
-    twowayValueBind(yearRange, yearSelect);
+    twowayValueBind(yearRange, yearSelect, 'input');
 };
 
 
@@ -111,15 +111,19 @@ exports.populateYears = function(data, defaultAccessors) {
 /**
  * Provide 'onChange' value binding between two D3 objects representing input controls.
  * @param  {object} d3El1 D3 object representing the first input control.
- * @param  {[type]} d3El2 D3 object representing the second input control.
+ * @param  {object} d3El2 D3 object representing the second input control.
+ * @param  {string} event1 Optional event type to bind to element 1.
+ * @param  {string} event2 Optional event type to bind to element 2.
  * @return {undefined}
  */
-function twowayValueBind(d3El1, d3El2) {
+function twowayValueBind(d3El1, d3El2, event1, event2) {
+    event1 = event1 || 'change';
+    event2 = event2 || 'change';
 
     // Use the DOM event API because the D3 event API
     // only allows one binding of each event type.
-    d3El1.node().addEventListener('change', bindValueFactory(d3El2));
-    d3El2.node().addEventListener('change', bindValueFactory(d3El1));
+    d3El1.node().addEventListener(event1, bindValueFactory(d3El2));
+    d3El2.node().addEventListener(event2, bindValueFactory(d3El1));
 }
 
 

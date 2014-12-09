@@ -6,16 +6,20 @@
 'use strict';
 
 var d3 = require('d3');
+var _assign = require('lodash.assign');
+var _clone = require('lodash.clone');
+var _throttle = require('lodash.throttle');
 
-
-var dimensionNamesMap = {
+var inputNamesMap = {
     horizontal: 'x',
     vertical: 'y',
-    radius: 'z'
+    radius: 'z',
+    yearSelect: 'year'
 };
 
 
 var WorldBankIndicatorControlsPrototype = module.exports = {};
+
 
 /**
  * Chart-type specific initialisation tasks.
@@ -43,7 +47,74 @@ WorldBankIndicatorControlsPrototype.init = function(options) {
     });
 
     // Activate two way binding between the year range and year select controls.
+    // Note: Firefox currently seems to be firing 'input' twice on range inputs.
     twowayValueBind(yearRange, yearSelect, 'input');
+};
+
+
+WorldBankIndicatorControlsPrototype.addDomEventListeners = function() {
+    var controls = this;
+    var d3Objects = this.d3Objects;
+
+    // Generate a throttled function which updates
+    // the accessors with new values at most once
+    // every throttleLimit milliseconds.
+    function updateAccessorFactory(selectInput) {
+        var throttleLimit = 100;
+        return _throttle(updateAccessor, throttleLimit, {trailing: true});
+
+        function updateAccessor() {
+            /* jshint validthis: true */
+
+            var element = this;
+            var newAccessors = {};
+            newAccessors[inputNamesMap[selectInput]] = element.value;
+            controls.setAccessors(newAccessors);
+        }
+    }
+
+    ['horizontal', 'vertical', 'radius', 'yearSelect'].forEach(function(selectInput) {
+        var d3SelectEl = d3Objects[selectInput];
+        var node = d3SelectEl.node();
+        var callback = updateAccessorFactory(selectInput);
+
+        // Listen to change events on the input elements.
+        node.addEventListener('change', callback);
+
+        // Listen to programmatically fired change events.
+        // The name is different from 'change' to avoid recursive event calling in Firefox.
+        node.addEventListener('programmaticChange', callback);
+    });
+};
+
+
+/**
+ * Set the data accessors for the chart.
+ * @param {object} accessors {x:'', y:'', z:'', year:''}
+ */
+WorldBankIndicatorControlsPrototype.setAccessors = function(newAccessors) {
+    var controls = this;
+
+    // If there was no argument then use the defaults.
+    if (!newAccessors) {
+        controls.accessors = controls.defaultAccessors;
+        return;
+    }
+
+    // If the new accessors are the same as the current do nothing.
+    if (Object.keys(newAccessors).every(function (key) {
+        return controls.accessors[key] === newAccessors[key];
+    })) {
+        return;
+    }
+
+    // Else mix the supplied accessors with the current accessors
+    _assign(controls.accessors, newAccessors);
+
+    // Falling back to defaults for missing values.
+    controls.accessors = _assign(_clone(controls.defaultAccessors), controls.accessors);
+
+    controls.emit('accessorsUpdated', _clone(controls.accessors));
 };
 
 
@@ -53,14 +124,14 @@ WorldBankIndicatorControlsPrototype.init = function(options) {
  * @param  {object} defaultAccessors The chart default accessors.
  * @return {undefined}
  */
-WorldBankIndicatorControlsPrototype.populate = function(data, defaultAccessors) {
-    this.populateIndices(data, defaultAccessors);
-    this.populateYears(data, defaultAccessors);
+WorldBankIndicatorControlsPrototype.populate = function(data, accessors) {
+    this.populateIndices(data, accessors);
+    this.populateYears(data, accessors);
 };
 
 
 // Indices select options.
-WorldBankIndicatorControlsPrototype.populateIndices = function(data, defaultAccessors) {
+WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) {
     var d3Objects = this.d3Objects;
 
 
@@ -78,17 +149,17 @@ WorldBankIndicatorControlsPrototype.populateIndices = function(data, defaultAcce
 
     ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
         var d3SelectEl = d3Objects[dimension];
-        var defaultValue = defaultAccessors[dimensionNamesMap[dimension]];
+        var defaultValue = accessors[inputNamesMap[dimension]];
         appendOptions(d3SelectEl, indices, defaultValue);
     });
 };
 
 
 // Years control options.
-WorldBankIndicatorControlsPrototype.populateYears = function(data, defaultAccessors) {
+WorldBankIndicatorControlsPrototype.populateYears = function(data, accessors) {
     var d3Objects = this.d3Objects;
     var years = data.years;
-    var defaultYear = defaultAccessors.year;
+    var year = accessors.year;
     var minYear = years[0];
     var maxYear = years[years.length-1];
 
@@ -101,34 +172,26 @@ WorldBankIndicatorControlsPrototype.populateYears = function(data, defaultAccess
         .attr({
             min: function() {return minYear;},
             max: function() {return maxYear;},
-            value: defaultYear,
+            value: year,
             step: 1
         });
 
     // Years select.
-    appendOptions(d3Objects.yearSelect, years, defaultYear);
+    appendOptions(d3Objects.yearSelect, years, year);
 };
 
 
+/**
+ * Given a chart object bind control events to chart methods.
+ * Called in the context where the controls are instantiated.
+ * @param {Chart Object} chart The chart object to control.
+ * @return {undefined}
+ */
 WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
     var controls = this;
 
-    // DEBUG
-    controls.on = function() {};
-
-    controls.on('accessorsUpdated', function(event) {
-        var newAccessors = event.data;
-
-        // Limited knowledge of Chart API within a known chart-type.
-        chart.updateAccessors(newAccessors);
-    });
-
-    controls.on('yearUpdated', function(event) {
-        var year = event.data;
-
-        // Limited knowledge of Chart API within a known chart-type.
-        chart.updateYear(year);
-    });
+    // EventEmitter event.
+    controls.on('accessorsUpdated', chart.updateAccessors.bind(chart));
 };
 
 
@@ -148,23 +211,33 @@ function twowayValueBind(d3El1, d3El2, event1, event2) {
     event2 = event2 || 'change';
 
     // Use the DOM event API because the D3 event API
-    // only allows one binding of each event type.
-    d3El1.node().addEventListener(event1, bindValueFactory(d3El2));
-    d3El2.node().addEventListener(event2, bindValueFactory(d3El1));
+    // only allows one binding of each event type
+    // without using D3 sepecific 'namespacing' notation.
+    d3El1.node().addEventListener(event1, bindValueFactory(d3El2, event1));
+    d3El2.node().addEventListener(event2, bindValueFactory(d3El1, event2));
 }
 
 
 /**
  * Given a D3 object representing an input control return a function
- * which maps that controls value to another element, for use with
+ * which copies that controls value to another element, for use with
  * an event listener.
  * @param  {object} d3El D3 object representing an input control.
  * @return {undefined}
  */
-function bindValueFactory(d3El) {
+function bindValueFactory(d3El, eventType) {
     return function() {
         var otherEl = this;
+        var event;
         d3El.property('value', otherEl.value);
+
+        // For non-change events fire a programmatic custom
+        // event on the modified input element.
+        if (eventType !== 'change') {
+            event = document.createEvent('Event');
+            event.initEvent('programmaticChange', true, true);
+            d3El.node().dispatchEvent(event);
+        }
     };
 }
 

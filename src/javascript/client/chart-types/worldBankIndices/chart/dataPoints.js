@@ -15,7 +15,7 @@ exports.updateDataPoints = function() {
     // Update selection.
     var updateSelection = chartArea
         .selectAll('g')
-        .data(chart.data.derived);
+        .data(chart.data.derived, function(d) { return d.region; });
 
 
     // Exit selection.

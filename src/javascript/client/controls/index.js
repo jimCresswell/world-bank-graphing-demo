@@ -3,9 +3,9 @@
  */
 'use strict';
 
-var _assign = require('lodash.assign');
+var EventEmitter = require('events').EventEmitter;
 
-// TODO require events ?
+var _assign = require('lodash.assign');
 
 var chartPrototypes = require('../chart-types');
 
@@ -34,25 +34,34 @@ function Controls(controlOptions, model) {
     controls.form = controlOptions.form;
 
 
-    // Container for references to d3 selections.
+    // References to expected properties.
     controls.d3Objects = {};
+    controls.accessors = {};
 
+    // Configuration passed in through options.
+    controls.defaultAccessors = controlOptions.defaultAccessors;
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default
     // Chart object prototype methods.
     _assign(Controls.prototype, chartPrototypes[controlOptions.chartType].controls);
 
+    // Extend the controls object with the EventEmitter functionality.
+    EventEmitter.call(controls);
+    _assign(Controls.prototype, EventEmitter.prototype);
+
 
     // Control chart-type initialisation tasks.
     controls.init(controlOptions);
 
+    // Set the default accessors
+    controls.setAccessors();
 
-    controls.populate(model.getData(), controlOptions.defaultAccessors);
+    // Using the model add appropriate options to the controls.
+    controls.populate(model.getData(), controls.accessors);
 
-    // TODO, some sort of generic 'controls updated' function
-    // that the specific implementation can call and which
-    // fires the event?
+    // Add the listeners for the DOM events on the controls.
+    controls.addDomEventListeners();
 }
 
 

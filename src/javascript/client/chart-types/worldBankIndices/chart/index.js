@@ -53,25 +53,14 @@ WorldBankIndicatorChartPrototype.updateAccessors = function(newAccessors) {
     var chart = this;
     chart.setAccessors(newAccessors);
     chart.deriveCurrentData();
+
+    // TODO: differentiate between indicators changing and just year changing.
+    // If just year changed.
+    //chart.updateDataPoints();
+
+    // If indicators changed
     chart.findDataExtremes();
-
-    // Redraw the chart.
     chart.drawChart();
-};
-
-
-/**
- * Update the year in the accessors and redraw the data points.
- * Used externally to control graph.
- * @param {string} yaer A year string.
- */
-WorldBankIndicatorChartPrototype.updateYear = function(newYear) {
-    var chart = this;
-    chart.accessors.year = newYear;
-    chart.deriveCurrentData();
-
-    // Rebind the chart data and redraw the data points.
-    chart.updateDataPoints();
 };
 
 

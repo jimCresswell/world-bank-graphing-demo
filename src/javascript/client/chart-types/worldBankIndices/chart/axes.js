@@ -52,29 +52,29 @@ exports.labelAxes = function() {
     var chart = this;
     var data = chart.data;
 
-    var xLabel = chart.d3Objects.axes.x
-        .append('g')
-        .classed('label xAxis__label', true);
+    ['x', 'y'].forEach(function (axisName) {
+        var d3Axis = chart.d3Objects.axes[axisName];
+        var label = d3Axis.select('.label');
+        var accessor = chart.accessors[axisName];
+        var text;
+        var title;
 
-    var xAccessor = chart.accessors.x;
-    xLabel
-        .append('text')
-        .text(data.indices[xAccessor].descriptor);
-    xLabel
-        .append('title')
-        .text(xAccessor);
+        if (label.size() === 0) {
+            label = d3Axis
+                .append('g')
+                .classed('label ' + axisName + '-axis__label', true);
 
-    var yLabel = chart.d3Objects.axes.y
-        .append('g')
-        .classed('label yAxis__label', true);
+            text = label.append('text');
+            title = label.append('title');
+        } else {
+            text = label.select('text');
+            title = label.select('title');
+        }
 
-    var yAccessor = chart.accessors.y;
-    yLabel
-        .append('text')
-        .text(data.indices[yAccessor].descriptor);
-    yLabel
-        .append('title')
-        .text(yAccessor);
+        text.text(data.indices[accessor].descriptor);
+        title.text(accessor);
+    });
+
 };
 
 

@@ -49,7 +49,7 @@ function Chart(chartOptions, model) {
     Chart.prototype.config.hasLegend = (chartOptions.hasLegend !== undefined) ? chartOptions.hasLegend : (Chart.prototype.config.hasLegend || false);
 
 
-    // Chart object properties expected to exist (just here as a hint).
+    // Chart object properties expected to exist.
     chart.accessors = {};
     chart.baseFontSize = false;
     chart.legendWidth = 0;

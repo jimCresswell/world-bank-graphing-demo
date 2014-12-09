@@ -47,7 +47,7 @@ var chartOptions = {
     chartType: 'worldBankIndices',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
-    zRange: [10, 20]
+    zRange: [10, 40]
 };
 
 

@@ -44,6 +44,7 @@
     "lodash.assign": "~2.4.1",
     "d3": "~3.4.13",
     "lodash.isnan": "~2.4.1",
-    "lodash.compact": "~2.4.1"
+    "lodash.compact": "~2.4.1",
+    "lodash.clone": "~2.4.1"
   }
 }

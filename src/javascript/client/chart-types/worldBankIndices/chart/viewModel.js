@@ -12,7 +12,7 @@ var _compact = require('lodash.compact');
 
 /**
  * Set the data accessors for the chart.
- * @param {object} accessors {x:'', y:'', z:''}
+ * @param {object} accessors {x:'', y:'', z:'', year:''}
  */
 exports.setAccessors = function(accessors) {
     if (accessors) {
@@ -55,7 +55,7 @@ exports.deriveCurrentData = function() {
     // Record the derived data with falsey values removed.
     derivedData = _compact(derivedData);
     if (derivedData.length === 0) {
-        console.warn('No complete data for accessors', accessors);
+        console.warn('No data for accessors', accessors);
     }
     data.derived = derivedData;
 };

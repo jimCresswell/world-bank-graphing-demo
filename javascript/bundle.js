@@ -28,12 +28,18 @@ var defaultAccessors = {
     x: 'Population, total',
     y: 'Life expectancy at birth, total (years)',
     z: 'GDP per capita (current US$)',
-    year: '2010'
+    year: '1978'
 };
 // 'CO2 emissions (metric tons per capita)',
 // 'Life expectancy at birth, total (years)',
 // 'Unemployment, total (% of total labor force) (modeled ILO estimate)',
 // 'Inflation, GDP deflator (annual %)',
+
+
+// Transition duration in ms, affects D3 transition
+// duraction and delay between animated year
+// progressions.
+var transitionDuration = 333;
 
 var controlOptions = {
     chartType: 'worldBankIndicators',
@@ -43,16 +49,21 @@ var controlOptions = {
     idSelectRadius: 'chart1-select-radius',
     idRangeYear: 'chart1-range-year',
     idSelectYear: 'chart1-select-year',
+    idPlay: 'chart1-play',
+    idStop: 'chart1-stop',
+    idRewind: 'chart1-rewind',
     classMinYear: 'control__min-year',
     classMaxYear: 'control__max-year',
-    defaultAccessors: defaultAccessors
+    defaultAccessors: defaultAccessors,
+    transitionDuration: transitionDuration
 };
 
 var chartOptions = {
     chartType: 'worldBankIndicators',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
-    zRange: [10, 30]
+    zRange: [10, 30],
+    transitionDuration: transitionDuration
 };
 
 
@@ -14901,6 +14912,7 @@ var d3 = require('d3');
 exports.updateDataPoints = function() {
     var chart = this;
     var chartArea = chart.d3Objects.chartArea;
+    var transitionDuration = chart.transitionDuration;
 
     // Update selection.
     var updateSelection = chartArea
@@ -14925,7 +14937,9 @@ exports.updateDataPoints = function() {
 
     // Update the group locations.
     updateSelection
-        .transition(1000)
+        .transition()
+        .ease('linear')
+        .duration(transitionDuration)
         .attr({
             transform: function(d) {
                 return 'translate(' +
@@ -14940,7 +14954,9 @@ exports.updateDataPoints = function() {
     // Note 'select' propagates bound data to
     // child elements, selectAll does not.
     updateSelection.select('circle')
-        .transition(1000)
+        .transition()
+        .ease('linear')
+        .duration(transitionDuration)
         .attr({
             r: function(d) {
                 return chart.scales.z(d.z);
@@ -15223,6 +15239,10 @@ exports.populateLegend = function() {
             x: 5,
             y: rectHeight/1.25
         });
+
+    // Set a title with the full region value.
+    legendRegions.append('title')
+        .text(function(d) {return d;});
 };
 
 
@@ -15596,6 +15616,9 @@ WorldBankIndicatorControlsPrototype.init = function(options) {
     d3Objects.horizontal = form.select('#' + options.idSelectHorizontal);
     d3Objects.vertical = form.select('#' + options.idSelectVertical);
     d3Objects.radius = form.select('#' + options.idSelectRadius);
+    d3Objects.play = form.select('#' + options.idPlay);
+    d3Objects.stop = form.select('#' + options.idStop);
+    d3Objects.rewind = form.select('#' + options.idRewind);
     var yearRange = d3Objects.yearRange = form.select('#' + options.idRangeYear);
     var yearSelect = d3Objects.yearSelect = form.select('#' + options.idSelectYear);
 
@@ -15606,9 +15629,9 @@ WorldBankIndicatorControlsPrototype.init = function(options) {
             .select('.' + options['class' + extreme + 'Year']);
     });
 
-    // Activate two way binding between the year range and year select controls.
+    // Two way binding between the year range and year select controls values.
     // Note: Firefox currently seems to be firing 'input' twice on range inputs.
-    twowayValueBind(yearRange, yearSelect, 'input');
+    twoWayValueBind(yearRange, yearSelect, 'input');
 };
 
 
@@ -15618,7 +15641,7 @@ WorldBankIndicatorControlsPrototype.addDomEventListeners = function() {
 
     // Generate a function which updates
     // the accessors with new values.
-    function updateAccessorFactory(selectInput) {
+    function updateAccessorFromSelectFactory(selectInput) {
          return function updateAccessor() {
             /* jshint validthis: true */
 
@@ -15629,18 +15652,107 @@ WorldBankIndicatorControlsPrototype.addDomEventListeners = function() {
         };
     }
 
+    // Listeners for input select controls.
     ['horizontal', 'vertical', 'radius', 'yearSelect'].forEach(function(selectInput) {
         var d3SelectEl = d3Objects[selectInput];
         var node = d3SelectEl.node();
-        var callback = updateAccessorFactory(selectInput);
+        var updateAccessorFromSelect = updateAccessorFromSelectFactory(selectInput);
 
         // Listen to change events on the input elements.
-        node.addEventListener('change', callback);
+        node.addEventListener('change', updateAccessorFromSelect);
 
         // Listen to programmatically fired change events.
         // The name is different from 'change' to avoid recursive event calling in Firefox.
-        node.addEventListener('programmaticChange', callback);
+        node.addEventListener('programmaticChange', updateAccessorFromSelect);
     });
+
+    // Listener for the play button.
+    var d3PlayButton = d3Objects.play;
+    d3PlayButton.on('click', function() {
+        var node = this;
+        var minYear = node.dataset.minYear;
+        var maxYear = node.dataset.maxYear;
+
+        // If the current year is the max year
+        // then rewind to the min year.
+        if (maxYear === controls.accessors.year) {
+            controls.setYear(minYear);
+        }
+        controls.playYears(maxYear);
+    });
+
+    // Listener for the rewind button.
+    var d3RewindButton = d3Objects.rewind;
+    d3RewindButton.on('click', function() {
+        var minYear = d3PlayButton.node().dataset.minYear;
+        controls.setYear(minYear);
+    });
+};
+
+
+/**
+ * Set the years, in order, from the current year to endYear,
+ * with a delay of `delay`.
+ * @param {string} endYear The final year to set.
+ * @return {undefined}
+ */
+WorldBankIndicatorControlsPrototype.playYears = function(endYear) {
+    var controls = this;
+    var transitionDuration = controls.transitionDuration;
+    var timeoutId;
+
+    // Idempotent.
+    if (controls.playing) {
+        return;
+    }
+    controls.playing = true;
+
+    // Stop if the stop button is clicked.
+    controls.d3Objects.stop.on('click', stop);
+
+    // Start progressing through years after a delay.
+    timeoutId = setTimeout(progressYears, transitionDuration);
+
+    // Using timeouts, progress through the years.
+    function progressYears() {
+        var nextYear = parseInt(controls.accessors.year) + 1;
+
+        if (nextYear <= endYear) {
+            controls.setYear(nextYear);
+            timeoutId = setTimeout(progressYears, transitionDuration);
+        } else {
+            controls.playing = false;
+        }
+    }
+
+    // Stop progressing through the years.
+    function stop() {
+        clearTimeout(timeoutId);
+        controls.playing = false;
+    }
+};
+
+
+/**
+ * Set the year in the accessors object and the UI controls.
+ * @param {string|number} year The year to set.
+ * @return {undefined}
+ */
+WorldBankIndicatorControlsPrototype.setYear = function(year) {
+    var controls = this;
+    var accessors = controls.accessors;
+    var newAccessors = _clone(accessors);
+    newAccessors.year = year.toString();
+
+    // Update UI control values.
+    // Hackety hack.
+    controls.d3Objects.yearRange.property('value', year);
+    controls.d3Objects.yearSelect.property('value', year);
+
+    // Update the accessors, this will trigger
+    // an event which will trigger the chart
+    // to update.
+    controls.setAccessors(newAccessors);
 };
 
 
@@ -15737,6 +15849,10 @@ WorldBankIndicatorControlsPrototype.populateYears = function(data, accessors) {
     d3Objects.yearMinSpan.text(minYear);
     d3Objects.yearMaxSpan.text(maxYear);
 
+    // Play years button data.
+    d3Objects.play.node().dataset.minYear = minYear;
+    d3Objects.play.node().dataset.maxYear = maxYear;
+
     // years range control.
     d3Objects.yearRange
         .attr({
@@ -15760,7 +15876,7 @@ WorldBankIndicatorControlsPrototype.populateYears = function(data, accessors) {
 WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
     var controls = this;
 
-    // EventEmitter event.
+    // EventEmitter events.
     controls.on('accessorsUpdated', chart.updateAccessorsAndChart.bind(chart));
 };
 
@@ -15776,7 +15892,7 @@ WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
  * @param  {string} event2 Optional event type to bind to element 2.
  * @return {undefined}
  */
-function twowayValueBind(d3El1, d3El2, event1, event2) {
+function twoWayValueBind(d3El1, d3El2, event1, event2) {
     event1 = event1 || 'change';
     event2 = event2 || 'change';
 
@@ -16004,6 +16120,7 @@ function Chart(chartOptions, model) {
     chart.svg = chartOptions.svg;
     chart.defaultAccessors = chartOptions.defaultAccessors;
     chart.zRange = chartOptions.zRange || [10, 20];
+    chart.transitionDuration = chartOptions.transitionDuration;
 
 
     // Do some setup as defined by the chart type prototype.
@@ -16272,9 +16389,11 @@ function Controls(controlOptions, model) {
     // References to expected properties.
     controls.d3Objects = {};
     controls.accessors = {};
+    controls.playing = false;
 
     // Configuration passed in through options.
     controls.defaultAccessors = controlOptions.defaultAccessors;
+    controls.transitionDuration = controlOptions.transitionDuration;
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default

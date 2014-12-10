@@ -16,7 +16,7 @@ var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-re
 
 
 var modelOptions = {
-    chartType: 'worldBankIndices'
+    chartType: 'worldBankIndicators'
 };
 
 
@@ -36,7 +36,7 @@ var defaultAccessors = {
 // 'Inflation, GDP deflator (annual %)',
 
 var controlOptions = {
-    chartType: 'worldBankIndices',
+    chartType: 'worldBankIndicators',
     id: 'chart-controls',
     idSelectHorizontal: 'chart1-select-horizontal',
     idSelectVertical: 'chart1-select-vertical',
@@ -49,7 +49,7 @@ var controlOptions = {
 };
 
 var chartOptions = {
-    chartType: 'worldBankIndices',
+    chartType: 'worldBankIndicators',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
     zRange: [10, 30]
@@ -14750,13 +14750,13 @@ module.exports = function(arr, fn, initial){
  */
 
 module.exports = {
-    worldBankIndices: {
-        model: require('./worldBankIndices/model'),
-        controls: require('./worldBankIndices/controls'),
-        chart: require('./worldBankIndices/chart')
+    worldBankIndicators: {
+        model: require('./worldBankIndicators/model'),
+        controls: require('./worldBankIndicators/controls'),
+        chart: require('./worldBankIndicators/chart')
     }
 };
-},{"./worldBankIndices/chart":92,"./worldBankIndices/controls":97,"./worldBankIndices/model":98}],88:[function(require,module,exports){
+},{"./worldBankIndicators/chart":92,"./worldBankIndicators/controls":97,"./worldBankIndicators/model":98}],88:[function(require,module,exports){
 /**
  * Axes functionality.
  *
@@ -14783,11 +14783,11 @@ var formatValuesFactory = require('./helpers').formatValuesFactory;
 
 exports.drawAxes = function() {
     var chart = this;
-    var indices = chart.data.indices;
+    var indicators = chart.data.indicators;
     var xAxisFactory = d3.svg.axis();
     var yAxisFactory = d3.svg.axis();
-    var xSymbol = indices[chart.accessors.x].symbol;
-    var ySymbol = indices[chart.accessors.y].symbol;
+    var xSymbol = indicators[chart.accessors.x].symbol;
+    var ySymbol = indicators[chart.accessors.y].symbol;
 
     // Request a number of x-axis ticks
     // according to css breakpoint.
@@ -14822,7 +14822,7 @@ exports.labelAxes = function() {
         // the axis with the accessor descriptor,
         // the label title attribute will still
         // contain the full accessor name.
-        var labelString = accessor.length > 40 ? data.indices[accessor].descriptor : accessor;
+        var labelString = accessor.length > 40 ? data.indicators[accessor].descriptor : accessor;
 
         if (d3LabelEl.size() === 0) {
             d3LabelEl = d3Axis
@@ -14859,13 +14859,13 @@ exports.positionAxesLabels = function() {
 
 },{"./helpers":91,"d3":4}],89:[function(require,module,exports){
 /**
- * Static default configuration for the World Bank indices chart.
+ * Static default configuration for the World Bank indicators chart.
  */
 
 'use strict';
 
 module.exports = {
-    cssClass: 'chart--world-bank-indices',
+    cssClass: 'chart--world-bank-indicators',
 
     // Colours per region.
     // 9 Colours, contrasting.
@@ -15407,11 +15407,11 @@ exports.appendTooltip = function(node) {
     tooltip.append('text')
         .text(function(d) {return d.region;});
 
-    // Append the indices descriptors and values content
+    // Append the indicators descriptors and values content
     // with a vertical offset.
     ['x','y','z'].forEach(function(dimension, i) {
-        var accessor = chart.accessors[dimension]
-        var indicatorObject = chart.data.indices[accessor];
+        var accessor = chart.accessors[dimension];
+        var indicatorObject = chart.data.indicators[accessor];
         var descriptor = indicatorObject.descriptor;
         var labelString = accessor.length > 40 ? descriptor : accessor;
         var formatter = formatValuesFactory(indicatorObject.symbol);
@@ -15490,9 +15490,9 @@ exports.deriveCurrentData = function() {
             z: parseFloat(data.rawData[region][accessors.z][year])
         };
 
-        // If any of the values are missing then skip
-        // this mark this region and year combination
-        // as false.
+        // If any of the values are missing then signal a
+        // missing combination of region, year and
+        // indicators by return false.
         if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
             return false;
         }
@@ -15512,7 +15512,7 @@ exports.deriveCurrentData = function() {
 /**
  * Find the extreme data for the current accessors
  * over all regions and years.
- * Needs to be called when index accessors change
+ * Needs to be called when indicator accessors change
  * but not when year accessor changes.
  * @return {undfined}
  */
@@ -15695,13 +15695,13 @@ WorldBankIndicatorControlsPrototype.setControlTitles = function(accessors) {
  * @return {undefined}
  */
 WorldBankIndicatorControlsPrototype.populate = function(data, accessors) {
-    this.populateIndices(data, accessors);
+    this.populateIndicators(data, accessors);
     this.populateYears(data, accessors);
 };
 
 
-// Indices select options.
-WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) {
+// Indicators select options.
+WorldBankIndicatorControlsPrototype.populateIndicators = function(data, accessors) {
     var d3Objects = this.d3Objects;
 
 
@@ -15710,17 +15710,17 @@ WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) 
     // so that the options in the select inputs are
     // 1) Shortish and
     // 2) Match the axes labels on the graph itself.
-    var indices = Object.keys(data.indices).map(function(key) {
+    var indicators = Object.keys(data.indicators).map(function(key) {
         return {
             name: key,
-            value: data.indices[key].descriptor
+            value: data.indicators[key].descriptor
         };
     });
 
     ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
         var d3SelectEl = d3Objects[dimension];
         var defaultValue = accessors[inputNamesMap[dimension]];
-        appendOptions(d3SelectEl, indices, defaultValue);
+        appendOptions(d3SelectEl, indicators, defaultValue);
     });
 };
 
@@ -15861,24 +15861,26 @@ function appendOptions(d3SelectEl, data, defaultValue) {
  */
 'use strict';
 
+var _isNaN = require('lodash.isnan');
+
 var WorldBankIndicatorModelPrototype = module.exports = {};
 
 WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
     var data = this.data = {};
 
-    // rawData[region][index] == [{year:, value:},{year:, value:},...]
+    // rawData[region][indicator] == [{year:, value:},{year:, value:},...]
     data.rawData = rawData;
 
     // Get the geographical regions.
     var regions = data.regions = Object.keys(rawData);
 
-    // Each region has the same development indices
+    // Each region has the same development indicators
     // so no need to loop over regions.
-    var indexKeys = Object.keys(rawData[regions[0]]);
+    var indicators = Object.keys(rawData[regions[0]]);
 
-    // Extract information about each index;
-    data.indices = {};
-    indexKeys.forEach(function (indexName) {
+    // Extract information about each indicator;
+    data.indicators = {};
+    indicators.forEach(function (indicatorName) {
         var descriptor, unit, symbol, matches = [];
 
         // Some percentages are have a unit
@@ -15888,11 +15890,11 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
         // descriptor [(unit)]
         // e.g. GDP growth (annual %)
         // e.g. Population, total
-        matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
+        matches = indicatorName.match(/([^\(]+)\(?([^\)]*)/);
         descriptor = matches[1];
         unit = matches[2] || false;
 
-        // Unit can be undefined for an index.
+        // Unit can be undefined for an indicator.
         // Unit does not have to contain a symbol.
         if (unit) {
             matches = unit.match(new RegExp('[%$£]|'+altPercentageString));
@@ -15905,19 +15907,38 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
             }
         }
 
-        data.indices[indexName] = {
+        data.indicators[indicatorName] = {
             descriptor: descriptor,
             unit: unit,
             symbol: symbol
         };
     });
 
-    // Each index has the same years
+    // Each indicator has the same years
     // so no need to loop.
-    data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
+    var years = data.years = Object.keys(rawData[regions[0]][indicators[0]]);
+
+    // If any of the values are missing then try to
+    // propagate previous values.
+    // https://github.com/jimCresswell/world-bank-graphing-demo/issues/32
+    regions.forEach(function (region) {
+        indicators.forEach(function (indicator) {
+            years.forEach(function (year) {
+                var value = parseFloat(rawData[region][indicator][year]);
+                var lastYear = year-1; // Implicit string to number coercion.
+                var previousValue;
+                if (_isNaN(value)) {
+                    previousValue = parseFloat(rawData[region][indicator][lastYear]);
+                    if (previousValue !== undefined && !_isNaN(previousValue)) {
+                        rawData[region][indicator][year] = rawData[region][indicator][lastYear];
+                    }
+                }
+            });
+        });
+    });
 };
 
-},{}],99:[function(require,module,exports){
+},{"lodash.isnan":74}],99:[function(require,module,exports){
 /**
  * Chart module initialisation, housekeeping, event listeners.
  *

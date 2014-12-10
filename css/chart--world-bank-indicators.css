@@ -21,11 +21,17 @@
     text-rendering: optimizeLegibility;
 }
 
-/* Legend label */
+/* Legend label. */
 .chart--world-bank-indicators .legend__item {
     font-size: 0.8em;
     font-weight: 900;
     text-rendering: optimizeLegibility;
+}
+
+/* Animation controls. */
+
+.chart-container .control-group .animation-controls {
+
 }
 
 .chart-container .control-group .timeline {
@@ -37,15 +43,10 @@
     border-radius: 40%;
 }
 
-.chart-container .control-group .timeline:first-of-type {
-    margin-left: 0.8em;
-}
-.chart-container .control-group .stop {
-
-}
-
 .chart-container .control-group .play > span {
-    margin-left: 2px;
+
+  /* Moving play symbol slightly to the right */
+  margin-left: 2px;
 }
 
 @-webkit-keyframes throb {

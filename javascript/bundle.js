@@ -15365,7 +15365,7 @@ exports.numLegendColumns = function() {
 
 exports.setLegendWidth = function() {
     var chart = this;
-    var singleColumnEms = 12;
+    var singleColumnEms = 14;
     var numColumns = chart.numLegendColumns();
 
     if (numColumns > 1) {

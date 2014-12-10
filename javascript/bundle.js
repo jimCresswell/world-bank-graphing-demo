@@ -15115,15 +15115,24 @@ WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
     var chart = this;
     var legend = chart.d3Objects.legend;
 
-    var legendDimensions = legend.node().getBoundingClientRect();
+    var legendAboveChart = chart.legendAboveChart();
+    var legendHeight = legend.node().getBoundingClientRect().height;
 
     chart.padding = {
-        top: 50 + legendDimensions.height,
+        top: 50,
         right: 30,
         bottom: 50,
         yAxis: 65
     };
+
     chart.padding.left = chart.padding.yAxis + 20;
+
+    if (legendAboveChart) {
+        chart.padding.top = chart.padding.top + legendHeight;
+    } else {
+        chart.padding.top = chart.padding.top - 30;
+        chart.padding.bottom = chart.padding.bottom + legendHeight + 20;
+    }
 };
 
 
@@ -15172,6 +15181,17 @@ WorldBankIndicatorChartPrototype.isAtleastWide = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
 };
 
+
+// Calculate if the legend should be
+// positioned above or below the chart.
+WorldBankIndicatorChartPrototype.legendAboveChart = function() {
+    var chart = this;
+    if (chart.isAtleastNarrow()) {
+        return true;
+    }
+    return false;
+};
+
 },{"./axes":88,"./config":89,"./dataPoints":90,"./legend":93,"./scales":94,"./tooltip":95,"./viewModel":96,"d3":4,"lodash.assign":5}],93:[function(require,module,exports){
 /**
  * Legend functionality.
@@ -15191,16 +15211,18 @@ WorldBankIndicatorChartPrototype.isAtleastWide = function() {
 
 
 exports.drawLegend = function() {
-    this.positionLegend();
     this.populateLegend();
+    this.positionLegend();
 };
 
 
 // Position the legend on the chart.
 exports.positionLegend = function() {
     var chart = this;
+    var legend = chart.d3Objects.legend;
     var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
-    var yOffset = 0;
+    var legendHeight = legend.node().getBoundingClientRect().height;
+    var yOffset = chart.legendAboveChart() ? 0 : (chart.dimensions.height - legendHeight);
 
     chart.d3Objects.legend
         .attr({

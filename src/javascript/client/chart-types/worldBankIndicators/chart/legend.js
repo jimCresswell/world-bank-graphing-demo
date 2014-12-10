@@ -64,6 +64,10 @@ exports.populateLegend = function() {
             x: 5,
             y: rectHeight/1.25
         });
+
+    // Set a title with the full region value.
+    legendRegions.append('title')
+        .text(function(d) {return d;});
 };
 
 

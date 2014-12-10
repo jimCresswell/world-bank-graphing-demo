@@ -37,9 +37,11 @@ function Controls(controlOptions, model) {
     // References to expected properties.
     controls.d3Objects = {};
     controls.accessors = {};
+    controls.playing = false;
 
     // Configuration passed in through options.
     controls.defaultAccessors = controlOptions.defaultAccessors;
+    controls.transitionDuration = controlOptions.transitionDuration;
 
     // Turn this into the appropriate type of Chart object.
     // Methods in the chart type will override default

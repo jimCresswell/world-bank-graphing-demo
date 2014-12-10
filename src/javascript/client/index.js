@@ -27,12 +27,15 @@ var defaultAccessors = {
     x: 'Population, total',
     y: 'Life expectancy at birth, total (years)',
     z: 'GDP per capita (current US$)',
-    year: '2010'
+    year: '1978'
 };
 // 'CO2 emissions (metric tons per capita)',
 // 'Life expectancy at birth, total (years)',
 // 'Unemployment, total (% of total labor force) (modeled ILO estimate)',
 // 'Inflation, GDP deflator (annual %)',
+
+// Transition duration in ms.
+var transitionDuration = 333;
 
 var controlOptions = {
     chartType: 'worldBankIndicators',
@@ -42,16 +45,21 @@ var controlOptions = {
     idSelectRadius: 'chart1-select-radius',
     idRangeYear: 'chart1-range-year',
     idSelectYear: 'chart1-select-year',
+    idPlay: 'chart1-play',
+    idStop: 'chart1-stop',
+    idRewind: 'chart1-rewind',
     classMinYear: 'control__min-year',
     classMaxYear: 'control__max-year',
-    defaultAccessors: defaultAccessors
+    defaultAccessors: defaultAccessors,
+    transitionDuration: transitionDuration
 };
 
 var chartOptions = {
     chartType: 'worldBankIndicators',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
-    zRange: [10, 30]
+    zRange: [10, 30],
+    transitionDuration: transitionDuration
 };
 
 

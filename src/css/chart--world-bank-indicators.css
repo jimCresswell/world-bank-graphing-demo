@@ -9,11 +9,31 @@
     font-size: 1.3em;
     font-weight: 500;
     text-rendering: optimizeLegibility;
- }
+}
 
- /* Legend label */
- .chart--world-bank-indicators .legend__item {
+/* Legend label */
+.chart--world-bank-indicators .legend__item {
     font-size: 0.8em;
     font-weight: 900;
     text-rendering: optimizeLegibility;
- }
+}
+
+.chart-container .control-group .timeline {
+    font-size: 1.3em;
+    height: 2rem;
+    width: 2rem;
+    background-color: Coral;
+    border: 1px solid #c0c0c0;
+    border-radius: 40%;
+}
+
+.chart-container .control-group .timeline:first-of-type {
+    margin-left: 0.8em;
+}
+.chart-container .control-group .stop {
+
+}
+
+.chart-container .control-group .play > span {
+    margin-left: 2px;
+}

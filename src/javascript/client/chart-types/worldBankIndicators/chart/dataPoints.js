@@ -11,6 +11,7 @@ var d3 = require('d3');
 exports.updateDataPoints = function() {
     var chart = this;
     var chartArea = chart.d3Objects.chartArea;
+    var transitionDuration = chart.transitionDuration;
 
     // Update selection.
     var updateSelection = chartArea
@@ -35,7 +36,9 @@ exports.updateDataPoints = function() {
 
     // Update the group locations.
     updateSelection
-        .transition(1000)
+        .transition()
+        .ease('linear')
+        .duration(transitionDuration)
         .attr({
             transform: function(d) {
                 return 'translate(' +
@@ -50,7 +53,9 @@ exports.updateDataPoints = function() {
     // Note 'select' propagates bound data to
     // child elements, selectAll does not.
     updateSelection.select('circle')
-        .transition(1000)
+        .transition()
+        .ease('linear')
+        .duration(transitionDuration)
         .attr({
             r: function(d) {
                 return chart.scales.z(d.z);

@@ -63,6 +63,7 @@ function Chart(chartOptions, model) {
     chart.svg = chartOptions.svg;
     chart.defaultAccessors = chartOptions.defaultAccessors;
     chart.zRange = chartOptions.zRange || [10, 20];
+    chart.transitionDuration = chartOptions.transitionDuration;
 
 
     // Do some setup as defined by the chart type prototype.

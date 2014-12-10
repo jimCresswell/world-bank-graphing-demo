@@ -3,9 +3,9 @@
  */
 
 module.exports = {
-    worldBankIndices: {
-        model: require('./worldBankIndices/model'),
-        controls: require('./worldBankIndices/controls'),
-        chart: require('./worldBankIndices/chart')
+    worldBankIndicators: {
+        model: require('./worldBankIndicators/model'),
+        controls: require('./worldBankIndicators/controls'),
+        chart: require('./worldBankIndicators/chart')
     }
 };

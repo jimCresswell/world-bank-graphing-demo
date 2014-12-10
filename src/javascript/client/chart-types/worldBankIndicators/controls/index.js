@@ -135,13 +135,13 @@ WorldBankIndicatorControlsPrototype.setControlTitles = function(accessors) {
  * @return {undefined}
  */
 WorldBankIndicatorControlsPrototype.populate = function(data, accessors) {
-    this.populateIndices(data, accessors);
+    this.populateIndicators(data, accessors);
     this.populateYears(data, accessors);
 };
 
 
-// Indices select options.
-WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) {
+// Indicators select options.
+WorldBankIndicatorControlsPrototype.populateIndicators = function(data, accessors) {
     var d3Objects = this.d3Objects;
 
 
@@ -150,17 +150,17 @@ WorldBankIndicatorControlsPrototype.populateIndices = function(data, accessors) 
     // so that the options in the select inputs are
     // 1) Shortish and
     // 2) Match the axes labels on the graph itself.
-    var indices = Object.keys(data.indices).map(function(key) {
+    var indicators = Object.keys(data.indicators).map(function(key) {
         return {
             name: key,
-            value: data.indices[key].descriptor
+            value: data.indicators[key].descriptor
         };
     });
 
     ['horizontal', 'vertical', 'radius'].forEach(function(dimension) {
         var d3SelectEl = d3Objects[dimension];
         var defaultValue = accessors[inputNamesMap[dimension]];
-        appendOptions(d3SelectEl, indices, defaultValue);
+        appendOptions(d3SelectEl, indicators, defaultValue);
     });
 };
 

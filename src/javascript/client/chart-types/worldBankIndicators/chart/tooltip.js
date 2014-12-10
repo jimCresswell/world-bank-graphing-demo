@@ -55,11 +55,11 @@ exports.appendTooltip = function(node) {
     tooltip.append('text')
         .text(function(d) {return d.region;});
 
-    // Append the indices descriptors and values content
+    // Append the indicators descriptors and values content
     // with a vertical offset.
     ['x','y','z'].forEach(function(dimension, i) {
-        var accessor = chart.accessors[dimension]
-        var indicatorObject = chart.data.indices[accessor];
+        var accessor = chart.accessors[dimension];
+        var indicatorObject = chart.data.indicators[accessor];
         var descriptor = indicatorObject.descriptor;
         var labelString = accessor.length > 40 ? descriptor : accessor;
         var formatter = formatValuesFactory(indicatorObject.symbol);

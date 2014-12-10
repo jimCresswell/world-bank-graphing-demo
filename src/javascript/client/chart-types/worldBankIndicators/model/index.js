@@ -10,19 +10,19 @@ var WorldBankIndicatorModelPrototype = module.exports = {};
 WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
     var data = this.data = {};
 
-    // rawData[region][index] == [{year:, value:},{year:, value:},...]
+    // rawData[region][indicator] == [{year:, value:},{year:, value:},...]
     data.rawData = rawData;
 
     // Get the geographical regions.
     var regions = data.regions = Object.keys(rawData);
 
-    // Each region has the same development indices
+    // Each region has the same development indicators
     // so no need to loop over regions.
-    var indexKeys = Object.keys(rawData[regions[0]]);
+    var indicatorKeys = Object.keys(rawData[regions[0]]);
 
-    // Extract information about each index;
-    data.indices = {};
-    indexKeys.forEach(function (indexName) {
+    // Extract information about each indicator;
+    data.indicators = {};
+    indicatorKeys.forEach(function (indicatorName) {
         var descriptor, unit, symbol, matches = [];
 
         // Some percentages are have a unit
@@ -32,11 +32,11 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
         // descriptor [(unit)]
         // e.g. GDP growth (annual %)
         // e.g. Population, total
-        matches = indexName.match(/([^\(]+)\(?([^\)]*)/);
+        matches = indicatorName.match(/([^\(]+)\(?([^\)]*)/);
         descriptor = matches[1];
         unit = matches[2] || false;
 
-        // Unit can be undefined for an index.
+        // Unit can be undefined for an indicator.
         // Unit does not have to contain a symbol.
         if (unit) {
             matches = unit.match(new RegExp('[%$£]|'+altPercentageString));
@@ -49,14 +49,14 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
             }
         }
 
-        data.indices[indexName] = {
+        data.indicators[indicatorName] = {
             descriptor: descriptor,
             unit: unit,
             symbol: symbol
         };
     });
 
-    // Each index has the same years
+    // Each indicator has the same years
     // so no need to loop.
-    data.years = Object.keys(rawData[regions[0]][indexKeys[0]]);
+    data.years = Object.keys(rawData[regions[0]][indicatorKeys[0]]);
 };

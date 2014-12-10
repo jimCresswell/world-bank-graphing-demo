@@ -64,7 +64,7 @@ exports.deriveCurrentData = function() {
 /**
  * Find the extreme data for the current accessors
  * over all regions and years.
- * Needs to be called when index accessors change
+ * Needs to be called when indicator accessors change
  * but not when year accessor changes.
  * @return {undfined}
  */

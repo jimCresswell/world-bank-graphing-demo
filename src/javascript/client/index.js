@@ -15,7 +15,7 @@ var dataUrlPath = window.location.pathname + 'data/world-growth-indicators-by-re
 
 
 var modelOptions = {
-    chartType: 'worldBankIndices'
+    chartType: 'worldBankIndicators'
 };
 
 
@@ -35,7 +35,7 @@ var defaultAccessors = {
 // 'Inflation, GDP deflator (annual %)',
 
 var controlOptions = {
-    chartType: 'worldBankIndices',
+    chartType: 'worldBankIndicators',
     id: 'chart-controls',
     idSelectHorizontal: 'chart1-select-horizontal',
     idSelectVertical: 'chart1-select-vertical',
@@ -48,7 +48,7 @@ var controlOptions = {
 };
 
 var chartOptions = {
-    chartType: 'worldBankIndices',
+    chartType: 'worldBankIndicators',
     id: 'chart1-svg',
     defaultAccessors: defaultAccessors,
     zRange: [10, 30]

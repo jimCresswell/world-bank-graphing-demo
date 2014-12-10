@@ -24,11 +24,11 @@ var formatValuesFactory = require('./helpers').formatValuesFactory;
 
 exports.drawAxes = function() {
     var chart = this;
-    var indices = chart.data.indices;
+    var indicators = chart.data.indicators;
     var xAxisFactory = d3.svg.axis();
     var yAxisFactory = d3.svg.axis();
-    var xSymbol = indices[chart.accessors.x].symbol;
-    var ySymbol = indices[chart.accessors.y].symbol;
+    var xSymbol = indicators[chart.accessors.x].symbol;
+    var ySymbol = indicators[chart.accessors.y].symbol;
 
     // Request a number of x-axis ticks
     // according to css breakpoint.
@@ -63,7 +63,7 @@ exports.labelAxes = function() {
         // the axis with the accessor descriptor,
         // the label title attribute will still
         // contain the full accessor name.
-        var labelString = accessor.length > 40 ? data.indices[accessor].descriptor : accessor;
+        var labelString = accessor.length > 40 ? data.indicators[accessor].descriptor : accessor;
 
         if (d3LabelEl.size() === 0) {
             d3LabelEl = d3Axis

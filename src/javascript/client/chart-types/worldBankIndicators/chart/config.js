@@ -1,11 +1,11 @@
 /**
- * Static default configuration for the World Bank indices chart.
+ * Static default configuration for the World Bank indicators chart.
  */
 
 'use strict';
 
 module.exports = {
-    cssClass: 'chart--world-bank-indices',
+    cssClass: 'chart--world-bank-indicators',
 
     // Colours per region.
     // 9 Colours, contrasting.

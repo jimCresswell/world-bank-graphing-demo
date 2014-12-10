@@ -118,6 +118,13 @@
 .chart-container .control-group .control select {
     width: 8em;
 }
+@media (min-width: 1024px) {
+    .chart-container .control-group .control select {
+        width: 11em;
+    }
+}
+
+
 .chart-container .control-group .control .control__max-year {
     margin-right: 0.8em;
 }

@@ -84,7 +84,11 @@ exports.enableDataPointInteractions = function(newDataPoints) {
         // When a data point is interacted with
         // bring it to the top of the drawing
         // stack.
-        nodeToTop(node);
+        // Don't do it in IE!
+        // https://groups.google.com/forum/#!searchin/d3-js/mouseout/d3-js/OqD9_puVTfg/CHAnVnRCqnAJ
+        if (!isIe()) {
+            nodeToTop(node);
+        }
 
         // Highlight any related legend item.
         chart.highlightLegendByRegion(d.region);
@@ -157,6 +161,10 @@ exports.deHighlightDataPointByRegion = function(regionName) {
  */
 function nodeToTop(node) {
     var parent = node.parentNode;
-    parent.removeChild(node);
     parent.appendChild(node);
+}
+
+function isIe() {
+    var ua = window.navigator.userAgent.toLowerCase();
+    return ua.search(/trident|msie/) !== -1;
 }

@@ -7,6 +7,8 @@
 /* Data point and legend highlighting */
 .highlight circle,
 .highlight rect {
+    -webkit-animation: throb 0.6s 1 ease-in-out;
+    animation: throb 0.6s 1 ease-in-out;
     opacity: 1;
     stroke-width: 2px;
     stroke: black !important;
@@ -44,4 +46,25 @@
 
 .chart-container .control-group .play > span {
     margin-left: 2px;
+}
+
+@-webkit-keyframes throb {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes throb {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+@-o-keyframes throb {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+@keyframes throb {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
 }

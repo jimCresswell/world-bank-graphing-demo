@@ -4,6 +4,14 @@
     opacity: 0.8;
 }
 
+/* Data point and legend highlighting */
+.highlight circle,
+.highlight rect {
+    opacity: 1;
+    stroke-width: 2px;
+    stroke: black !important;
+}
+
 /* Axis label */
 .chart--world-bank-indicators .label {
     font-size: 1.3em;

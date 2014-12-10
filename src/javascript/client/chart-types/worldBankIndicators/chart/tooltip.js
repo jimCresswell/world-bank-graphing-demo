@@ -17,13 +17,12 @@ var formatValuesFactory = require('./helpers').formatValuesFactory;
  * getBoundingClientRect method requires
  * the element to be in the DOM.
  *
- * @param  {DOMNode} node
+ * @param  {D3 selection} dataPoint
  * @return {undefined}
  */
-exports.appendTooltip = function(node) {
+exports.appendTooltip = function(dataPoint) {
     var chart = this;
-    var datapoint = d3.select(node);
-    var tooltip = datapoint.append('g');
+    var tooltip = dataPoint.append('g');
 
     tooltip
         .classed('tooltip', true);
@@ -31,7 +30,7 @@ exports.appendTooltip = function(node) {
 
     // Calculate the offset directions for
     // tooltips according to which chart
-    // quadrant the datapoint is in.
+    // quadrant the data point is in.
     // The default tooltip offset (in the
     // top left quadrant) is down and to
     // the right.
@@ -40,7 +39,7 @@ exports.appendTooltip = function(node) {
     var textAnchor = 'start';
     var plotWidth = chart.dimensions.width - chart.padding.left - chart.padding.right;
     var plotHeight = chart.dimensions.height - chart.padding.top - chart.padding.bottom;
-    var translate = d3.transform(datapoint.attr('transform')).translate;
+    var translate = d3.transform(dataPoint.attr('transform')).translate;
     var xTranslate = translate[0];
     var yTranslate = translate[1];
     if (xTranslate >= plotWidth/2) {

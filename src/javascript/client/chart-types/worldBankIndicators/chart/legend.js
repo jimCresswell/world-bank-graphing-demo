@@ -14,6 +14,7 @@
  */
 'use strict';
 
+var d3 = require('d3');
 
 exports.drawLegend = function() {
     this.populateLegend();
@@ -46,6 +47,7 @@ exports.populateLegend = function() {
         .data(data.regions)
         .enter()
         .append('g')
+            .attr('data-region', function(d) {return d;})
             .classed('legend__item', true);
 
     chart.positionLegendItems();
@@ -70,6 +72,34 @@ exports.populateLegend = function() {
     // Set a title with the full region value.
     legendRegions.append('title')
         .text(function(d) {return d;});
+
+    // Set event listeners
+
+    // Highlight this region and corresponding data points.
+    legendRegions.on('mouseover', function(regionName) {
+        var legendItem = d3.select(this);
+        legendItem.classed('highlight', true);
+        chart.highlightDataPointByRegion(regionName);
+    });
+
+    // Remove highlighting.
+    legendRegions.on('mouseout', function(regionName) {
+        var legendItem = d3.select(this);
+        legendItem.classed('highlight', false);
+        chart.deHighlightDataPointByRegion(regionName);
+    });
+};
+
+// Given a region highlight the corresponding legend item.
+exports.highlightLegendByRegion = function(regionName) {
+    var legendItem = this.d3Objects.legend.select('[data-region="' + regionName + '"]');
+    legendItem.classed('highlight', true);
+};
+
+// Given a region remove any highlighting.
+exports.deHighlightLegendByRegion = function(regionName) {
+    var legendItem = this.d3Objects.legend.select('[data-region="' + regionName + '"]');
+    legendItem.classed('highlight', false);
 };
 
 

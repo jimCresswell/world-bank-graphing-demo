@@ -28,6 +28,7 @@ exports.updateDataPoints = function() {
     // Append groups and circles (enter selection entities move to update selection).
     updateSelection.enter()
         .append('g')
+        .attr('data-region', function(d) {return d.region;})
         .append('circle')
             .style({
                 fill: function(d) {return chart.scales.regionColour(d.region); },
@@ -70,21 +71,37 @@ exports.updateDataPoints = function() {
 exports.enableDataPointInteractions = function(newDataPoints) {
     var chart = this;
 
-    newDataPoints.on('mouseover', function() {
+    newDataPoints.on('mouseover', function(d) {
         var node = this;
-        chart.appendTooltip(node);
+        var dataPoint = d3.select(node);
+
+        // Highlight the data point.
+        d3.select(node).classed('highlight', true);
+
+        // Add the tooltip.
+        chart.appendTooltip(dataPoint);
 
         // When a data point is interacted with
         // bring it to the top of the drawing
         // stack.
-        var parent = this.parentNode;
-        parent.removeChild(this);
-        parent.appendChild(this);
+        nodeToTop(node);
+
+        // Highlight any related legend item.
+        chart.highlightLegendByRegion(d.region);
     });
 
-    newDataPoints.on('mouseout', function() {
-        var tooltip = d3.select(this).select('.tooltip');
+    newDataPoints.on('mouseout', function(d) {
+        var dataPoint = d3.select(this);
+        var tooltip = dataPoint.select('.tooltip');
+
+        // Remove the tooltip.
         tooltip.remove();
+
+        // Remove the data point highlighting.
+        dataPoint.classed('highlight', false);
+
+        // Remove any legend highlighting
+        chart.deHighlightLegendByRegion(d.region);
     });
 };
 
@@ -114,3 +131,32 @@ exports.rescaleDataPoints = function() {
             r: function(d) {return chart.scales.z(d.z);}
         });
 };
+
+// Given a region highlight the corresponding data point.
+exports.highlightDataPointByRegion = function(regionName) {
+    var dataPoint = this.d3Objects.chartArea.select('[data-region="' + regionName + '"]');
+    dataPoint.classed('highlight', true);
+    nodeToTop(dataPoint.node());
+};
+
+// Given a region remove any highlighting.
+exports.deHighlightDataPointByRegion = function(regionName) {
+    this.d3Objects.chartArea.select('[data-region="' + regionName + '"]')
+        .classed('highlight', false);
+};
+
+/* Helpers */
+
+/**
+ * Remove a node from the DOM then
+ * put it back. For SVG elements
+ * this places the node at the top
+ * of the visual stack.
+ * @param  {DOM node object} node The node to bring to the top.
+ * @return {undefined}
+ */
+function nodeToTop(node) {
+    var parent = node.parentNode;
+    parent.removeChild(node);
+    parent.appendChild(node);
+}

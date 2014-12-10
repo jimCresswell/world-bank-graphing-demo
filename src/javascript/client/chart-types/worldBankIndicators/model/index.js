@@ -5,6 +5,8 @@
  */
 'use strict';
 
+var _isNaN = require('lodash.isnan');
+
 var WorldBankIndicatorModelPrototype = module.exports = {};
 
 WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
@@ -18,11 +20,11 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
 
     // Each region has the same development indicators
     // so no need to loop over regions.
-    var indicatorKeys = Object.keys(rawData[regions[0]]);
+    var indicators = Object.keys(rawData[regions[0]]);
 
     // Extract information about each indicator;
     data.indicators = {};
-    indicatorKeys.forEach(function (indicatorName) {
+    indicators.forEach(function (indicatorName) {
         var descriptor, unit, symbol, matches = [];
 
         // Some percentages are have a unit
@@ -58,5 +60,24 @@ WorldBankIndicatorModelPrototype.addRawData = function(rawData) {
 
     // Each indicator has the same years
     // so no need to loop.
-    data.years = Object.keys(rawData[regions[0]][indicatorKeys[0]]);
+    var years = data.years = Object.keys(rawData[regions[0]][indicators[0]]);
+
+    // If any of the values are missing then try to
+    // propagate previous values.
+    // https://github.com/jimCresswell/world-bank-graphing-demo/issues/32
+    regions.forEach(function (region) {
+        indicators.forEach(function (indicator) {
+            years.forEach(function (year) {
+                var value = parseFloat(rawData[region][indicator][year]);
+                var lastYear = year-1; // Implicit string to number coercion.
+                var previousValue;
+                if (_isNaN(value)) {
+                    previousValue = parseFloat(rawData[region][indicator][lastYear]);
+                    if (previousValue !== undefined && !_isNaN(previousValue)) {
+                        rawData[region][indicator][year] = rawData[region][indicator][lastYear];
+                    }
+                }
+            });
+        });
+    });
 };

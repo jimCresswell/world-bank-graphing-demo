@@ -42,9 +42,9 @@ exports.deriveCurrentData = function() {
             z: parseFloat(data.rawData[region][accessors.z][year])
         };
 
-        // If any of the values are missing then skip
-        // this mark this region and year combination
-        // as false.
+        // If any of the values are missing then signal a
+        // missing combination of region, year and
+        // indicators by return false.
         if (_isNaN(values.x) || _isNaN(values.y) || _isNaN(values.z)) {
             return false;
         }

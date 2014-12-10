@@ -16,16 +16,18 @@
 
 
 exports.drawLegend = function() {
-    this.positionLegend();
     this.populateLegend();
+    this.positionLegend();
 };
 
 
 // Position the legend on the chart.
 exports.positionLegend = function() {
     var chart = this;
+    var legend = chart.d3Objects.legend;
     var xOffset = Math.max(0, chart.dimensions.width/2 - chart.legendWidth/2);
-    var yOffset = 0;
+    var legendHeight = legend.node().getBoundingClientRect().height;
+    var yOffset = chart.legendAboveChart() ? 0 : (chart.dimensions.height - legendHeight);
 
     chart.d3Objects.legend
         .attr({

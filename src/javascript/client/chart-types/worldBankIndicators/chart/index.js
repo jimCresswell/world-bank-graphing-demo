@@ -65,15 +65,24 @@ WorldBankIndicatorChartPrototype.setAreaChartPadding = function() {
     var chart = this;
     var legend = chart.d3Objects.legend;
 
-    var legendDimensions = legend.node().getBoundingClientRect();
+    var legendAboveChart = chart.legendAboveChart();
+    var legendHeight = legend.node().getBoundingClientRect().height;
 
     chart.padding = {
-        top: 50 + legendDimensions.height,
+        top: 50,
         right: 30,
         bottom: 50,
         yAxis: 65
     };
+
     chart.padding.left = chart.padding.yAxis + 20;
+
+    if (legendAboveChart) {
+        chart.padding.top = chart.padding.top + legendHeight;
+    } else {
+        chart.padding.top = chart.padding.top - 30;
+        chart.padding.bottom = chart.padding.bottom + legendHeight + 20;
+    }
 };
 
 
@@ -120,4 +129,15 @@ WorldBankIndicatorChartPrototype.isAtleastMedium = function() {
 
 WorldBankIndicatorChartPrototype.isAtleastWide = function() {
     return parseInt(this.breakpointWidth) >= this.config.breakPoints.wide;
+};
+
+
+// Calculate if the legend should be
+// positioned above or below the chart.
+WorldBankIndicatorChartPrototype.legendAboveChart = function() {
+    var chart = this;
+    if (chart.isAtleastNarrow()) {
+        return true;
+    }
+    return false;
 };

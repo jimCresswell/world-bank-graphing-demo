@@ -14929,6 +14929,7 @@ exports.updateDataPoints = function() {
     // Append groups and circles (enter selection entities move to update selection).
     updateSelection.enter()
         .append('g')
+        .attr('data-region', function(d) {return d.region;})
         .append('circle')
             .style({
                 fill: function(d) {return chart.scales.regionColour(d.region); },
@@ -14971,21 +14972,37 @@ exports.updateDataPoints = function() {
 exports.enableDataPointInteractions = function(newDataPoints) {
     var chart = this;
 
-    newDataPoints.on('mouseover', function() {
+    newDataPoints.on('mouseover', function(d) {
         var node = this;
-        chart.appendTooltip(node);
+        var dataPoint = d3.select(node);
+
+        // Highlight the data point.
+        d3.select(node).classed('highlight', true);
+
+        // Add the tooltip.
+        chart.appendTooltip(dataPoint);
 
         // When a data point is interacted with
         // bring it to the top of the drawing
         // stack.
-        var parent = this.parentNode;
-        parent.removeChild(this);
-        parent.appendChild(this);
+        nodeToTop(node);
+
+        // Highlight any related legend item.
+        chart.highlightLegendByRegion(d.region);
     });
 
-    newDataPoints.on('mouseout', function() {
-        var tooltip = d3.select(this).select('.tooltip');
+    newDataPoints.on('mouseout', function(d) {
+        var dataPoint = d3.select(this);
+        var tooltip = dataPoint.select('.tooltip');
+
+        // Remove the tooltip.
         tooltip.remove();
+
+        // Remove the data point highlighting.
+        dataPoint.classed('highlight', false);
+
+        // Remove any legend highlighting
+        chart.deHighlightLegendByRegion(d.region);
     });
 };
 
@@ -15016,6 +15033,34 @@ exports.rescaleDataPoints = function() {
         });
 };
 
+// Given a region highlight the corresponding data point.
+exports.highlightDataPointByRegion = function(regionName) {
+    var dataPoint = this.d3Objects.chartArea.select('[data-region="' + regionName + '"]');
+    dataPoint.classed('highlight', true);
+    nodeToTop(dataPoint.node());
+};
+
+// Given a region remove any highlighting.
+exports.deHighlightDataPointByRegion = function(regionName) {
+    this.d3Objects.chartArea.select('[data-region="' + regionName + '"]')
+        .classed('highlight', false);
+};
+
+/* Helpers */
+
+/**
+ * Remove a node from the DOM then
+ * put it back. For SVG elements
+ * this places the node at the top
+ * of the visual stack.
+ * @param  {DOM node object} node The node to bring to the top.
+ * @return {undefined}
+ */
+function nodeToTop(node) {
+    var parent = node.parentNode;
+    parent.removeChild(node);
+    parent.appendChild(node);
+}
 },{"d3":4}],91:[function(require,module,exports){
 /**
  * Chart helper functions.
@@ -15209,6 +15254,7 @@ WorldBankIndicatorChartPrototype.legendAboveChart = function() {
  */
 'use strict';
 
+var d3 = require('d3');
 
 exports.drawLegend = function() {
     this.populateLegend();
@@ -15241,6 +15287,7 @@ exports.populateLegend = function() {
         .data(data.regions)
         .enter()
         .append('g')
+            .attr('data-region', function(d) {return d;})
             .classed('legend__item', true);
 
     chart.positionLegendItems();
@@ -15265,6 +15312,34 @@ exports.populateLegend = function() {
     // Set a title with the full region value.
     legendRegions.append('title')
         .text(function(d) {return d;});
+
+    // Set event listeners
+
+    // Highlight this region and corresponding data points.
+    legendRegions.on('mouseover', function(regionName) {
+        var legendItem = d3.select(this);
+        legendItem.classed('highlight', true);
+        chart.highlightDataPointByRegion(regionName);
+    });
+
+    // Remove highlighting.
+    legendRegions.on('mouseout', function(regionName) {
+        var legendItem = d3.select(this);
+        legendItem.classed('highlight', false);
+        chart.deHighlightDataPointByRegion(regionName);
+    });
+};
+
+// Given a region highlight the corresponding legend item.
+exports.highlightLegendByRegion = function(regionName) {
+    var legendItem = this.d3Objects.legend.select('[data-region="' + regionName + '"]');
+    legendItem.classed('highlight', true);
+};
+
+// Given a region remove any highlighting.
+exports.deHighlightLegendByRegion = function(regionName) {
+    var legendItem = this.d3Objects.legend.select('[data-region="' + regionName + '"]');
+    legendItem.classed('highlight', false);
 };
 
 
@@ -15341,7 +15416,7 @@ exports.positionLegendItems = function () {
         });
 };
 
-},{}],94:[function(require,module,exports){
+},{"d3":4}],94:[function(require,module,exports){
 /**
  * Scales functionality.
  *
@@ -15411,13 +15486,12 @@ var formatValuesFactory = require('./helpers').formatValuesFactory;
  * getBoundingClientRect method requires
  * the element to be in the DOM.
  *
- * @param  {DOMNode} node
+ * @param  {D3 selection} dataPoint
  * @return {undefined}
  */
-exports.appendTooltip = function(node) {
+exports.appendTooltip = function(dataPoint) {
     var chart = this;
-    var datapoint = d3.select(node);
-    var tooltip = datapoint.append('g');
+    var tooltip = dataPoint.append('g');
 
     tooltip
         .classed('tooltip', true);
@@ -15425,7 +15499,7 @@ exports.appendTooltip = function(node) {
 
     // Calculate the offset directions for
     // tooltips according to which chart
-    // quadrant the datapoint is in.
+    // quadrant the data point is in.
     // The default tooltip offset (in the
     // top left quadrant) is down and to
     // the right.
@@ -15434,7 +15508,7 @@ exports.appendTooltip = function(node) {
     var textAnchor = 'start';
     var plotWidth = chart.dimensions.width - chart.padding.left - chart.padding.right;
     var plotHeight = chart.dimensions.height - chart.padding.top - chart.padding.bottom;
-    var translate = d3.transform(datapoint.attr('transform')).translate;
+    var translate = d3.transform(dataPoint.attr('transform')).translate;
     var xTranslate = translate[0];
     var yTranslate = translate[1];
     if (xTranslate >= plotWidth/2) {

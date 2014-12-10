@@ -144,5 +144,5 @@
 
 /* tooltips */
 .tooltip {
-    point-events: none;
+    pointer-events: none;
 }

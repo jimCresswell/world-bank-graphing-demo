@@ -34,7 +34,10 @@ var defaultAccessors = {
 // 'Unemployment, total (% of total labor force) (modeled ILO estimate)',
 // 'Inflation, GDP deflator (annual %)',
 
-// Transition duration in ms.
+
+// Transition duration in ms, affects D3 transition
+// duraction and delay between animated year
+// progressions.
 var transitionDuration = 333;
 
 var controlOptions = {

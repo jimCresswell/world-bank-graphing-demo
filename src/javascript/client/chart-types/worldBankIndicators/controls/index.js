@@ -51,7 +51,9 @@ WorldBankIndicatorControlsPrototype.init = function(options) {
 
     // Two way binding between the year range and year select controls values.
     // Note: Firefox currently seems to be firing 'input' twice on range inputs.
-    twoWayValueBind(yearRange, yearSelect, 'input');
+    // Chrome and Firefox fire input on thumb drag and change on thumb release
+    // IE fires change on thumb drag and never fires input... so have to bind to both.
+    twoWayValueBind(yearRange, yearSelect, ['input', 'change'], undefined);
 };
 
 
@@ -308,19 +310,30 @@ WorldBankIndicatorControlsPrototype.addHooks = function(chart) {
  * Provide 'onChange' value binding between two D3 objects representing input controls.
  * @param  {object} d3El1 D3 object representing the first input control.
  * @param  {object} d3El2 D3 object representing the second input control.
- * @param  {string} event1 Optional event type to bind to element 1.
- * @param  {string} event2 Optional event type to bind to element 2.
+ * @param  {string|array} event1 Optional event type(s) to bind to element 1.
+ * @param  {string|array} event2 Optional event type(s) to bind to element 2.
  * @return {undefined}
  */
 function twoWayValueBind(d3El1, d3El2, event1, event2) {
-    event1 = event1 || 'change';
-    event2 = event2 || 'change';
+    event1 = event1 || ['change'];
+    event2 = event2 || ['change'];
+
+    if (typeof event1 === 'string') {
+        event1 = [event1];
+    }
+    if (typeof event2 === 'string') {
+        event2 = [event2];
+    }
 
     // Use the DOM event API because the D3 event API
     // only allows one binding of each event type
     // without using D3 sepecific 'namespacing' notation.
-    d3El1.node().addEventListener(event1, bindValueFactory(d3El2, event1));
-    d3El2.node().addEventListener(event2, bindValueFactory(d3El1, event2));
+    event1.forEach(function(eventType) {
+        d3El1.node().addEventListener(eventType, bindValueFactory(d3El2, eventType));
+    });
+    event2.forEach(function(eventType) {
+        d3El2.node().addEventListener(eventType, bindValueFactory(d3El1, eventType));
+    });
 }
 
 
@@ -331,19 +344,17 @@ function twoWayValueBind(d3El1, d3El2, event1, event2) {
  * @param  {object} d3El D3 object representing an input control.
  * @return {undefined}
  */
-function bindValueFactory(d3El, eventType) {
+function bindValueFactory(d3El) {
     return function() {
         var otherEl = this;
         var event;
         d3El.property('value', otherEl.value);
 
-        // For non-change events fire a programmatic custom
-        // event on the modified input element.
-        if (eventType !== 'change') {
-            event = document.createEvent('Event');
-            event.initEvent('programmaticChange', true, true);
-            d3El.node().dispatchEvent(event);
-        }
+        // Fire a custom event on the programmaticly
+        // modified input element.
+        event = document.createEvent('Event');
+        event.initEvent('programmaticChange', true, true);
+        d3El.node().dispatchEvent(event);
     };
 }
 

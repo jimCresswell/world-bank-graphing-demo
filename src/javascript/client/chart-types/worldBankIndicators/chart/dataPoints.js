@@ -15,7 +15,7 @@ exports.updateDataPoints = function() {
 
     // Update selection.
     var updateSelection = chartArea
-        .selectAll('g')
+        .selectAll('g.data-point')
         .data(chart.data.derived, function(d) { return d.region; });
 
 
@@ -28,6 +28,7 @@ exports.updateDataPoints = function() {
     // Append groups and circles (enter selection entities move to update selection).
     updateSelection.enter()
         .append('g')
+        .classed('data-point', true)
         .attr('data-region', function(d) {return d.region;})
         .append('circle')
             .style({
@@ -79,7 +80,7 @@ exports.enableDataPointInteractions = function(newDataPoints) {
         d3.select(node).classed('highlight', true);
 
         // Add the tooltip.
-        chart.appendTooltip(dataPoint);
+        chart.showTooltip(dataPoint);
 
         // When a data point is interacted with
         // bring it to the top of the drawing
@@ -96,10 +97,9 @@ exports.enableDataPointInteractions = function(newDataPoints) {
 
     newDataPoints.on('mouseout', function(d) {
         var dataPoint = d3.select(this);
-        var tooltip = dataPoint.select('.tooltip');
 
         // Remove the tooltip.
-        tooltip.remove();
+        chart.hideTooltip();
 
         // Remove the data point highlighting.
         dataPoint.classed('highlight', false);
@@ -117,7 +117,7 @@ exports.enableDataPointInteractions = function(newDataPoints) {
  */
 exports.rescaleDataPoints = function() {
     var chart = this;
-    var dataPoints = this.d3Objects.chartArea.selectAll('g');
+    var dataPoints = this.d3Objects.chartArea.selectAll('g.data-point');
 
     dataPoints
         .attr({

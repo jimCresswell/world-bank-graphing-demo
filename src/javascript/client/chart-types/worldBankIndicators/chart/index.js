@@ -41,6 +41,8 @@ WorldBankIndicatorChartPrototype.init = function() {
     d3Objects.axes.y = d3Svg.append('g').classed('axis y-axis', true);
     d3Objects.legend = d3Svg.append('g').classed('legend', true);
     d3Objects.chartArea = d3Svg.append('g').classed('chart__area', true);
+
+    d3Objects.tooltip = d3Objects.chartArea.append('g').classed('tooltip', true);
 };
 
 

@@ -8,28 +8,52 @@
 var d3 = require('d3');
 var formatValuesFactory = require('./helpers').formatValuesFactory;
 
+
 /**
- * Given a node append a tooltip to it.
- *
- * Note: can't append node after setting content
- * because the content relies on the inherited
- * data from the parent node and because the
- * getBoundingClientRect method requires
- * the element to be in the DOM.
+ * Populate and show the tooltip.
  *
  * @param  {D3 selection} dataPoint
  * @return {undefined}
  */
-exports.appendTooltip = function(dataPoint) {
+exports.showTooltip = function(dataPoint) {
     var chart = this;
-    var tooltip = dataPoint.append('g');
+    var tooltip = chart.d3Objects.tooltip;
 
-    tooltip
-        .classed('tooltip', true);
+    // Make sure the tooltip is on top of the chart.
+    var node = tooltip.node();
+    node.parentNode.appendChild(node);
 
+    // Share the data point data with the
+    // tooltip in a D3 friendly format.
+    var dataObject = dataPoint.data()[0];
+    var data = [];
+    data.push(dataObject.region);
+    ['x','y','z'].forEach(function(dimension) {
+        var accessor = chart.accessors[dimension];
+        var indicatorObject = chart.data.indicators[accessor];
+        var descriptor = indicatorObject.descriptor;
+        var labelString = accessor.length > 40 ? descriptor : accessor;
+        var formatter = formatValuesFactory(indicatorObject.symbol);
+        data.push(labelString + ': ' + formatter(dataObject[dimension]));
+    });
+
+    // Build the tooltip content.
+    var updateSelection = tooltip.selectAll('text').data(data);
+
+    updateSelection.enter()
+        .append('text');
+
+    updateSelection.exit()
+        .remove();
+
+    updateSelection
+        .text(function(d) {return d;})
+        .attr({
+           y: function(d, i) {return 20*i;}
+        });
 
     // Calculate the offset directions for
-    // tooltips according to which chart
+    // tooltip according to which chart
     // quadrant the data point is in.
     // The default tooltip offset (in the
     // top left quadrant) is down and to
@@ -50,45 +74,40 @@ exports.appendTooltip = function(dataPoint) {
         yOffsetSign = -1;
     }
 
-    // Append the region tooltip content.
-    tooltip.append('text')
-        .text(function(d) {return d.region;});
-
-    // Append the indicators descriptors and values content
-    // with a vertical offset.
-    ['x','y','z'].forEach(function(dimension, i) {
-        var accessor = chart.accessors[dimension];
-        var indicatorObject = chart.data.indicators[accessor];
-        var descriptor = indicatorObject.descriptor;
-        var labelString = accessor.length > 40 ? descriptor : accessor;
-        var formatter = formatValuesFactory(indicatorObject.symbol);
-        tooltip.append('text')
-            .text(function(d) {return labelString + ': ' + formatter(d[dimension]);})
-            .attr({
-               y: 20*(i+1)
-            });
-    });
+    // Have to set display initial before measuring
+    // tooltip bounding box or IE will claim the
+    // height is 0.
+    tooltip.style('display', 'initial');
 
     // Position the tooltip according to
     // its offset directions.
     tooltip
-        .attr('transform', function(d) {
-            var circleRadius = chart.scales.z(d.z);
+        .attr('transform', function() {
+            var circleRadius = chart.scales.z(dataObject.z);
 
             // Default, move the tooltip down a bit.
-            var yOffset = yOffsetSign * circleRadius * 0.5;
+            var yOffset = yTranslate + yOffsetSign * circleRadius * 0.5;
 
             // Move the tooltip up.
             if (yOffsetSign === -1) {
-                yOffset = yOffsetSign * (tooltip.node().getBoundingClientRect().height - circleRadius);
+                yOffset = yTranslate + yOffsetSign * (tooltip.node().getBoundingClientRect().height - circleRadius);
             }
+
+             // DEBUG
+            console.log(yOffsetSign, yTranslate, tooltip.node().getBoundingClientRect().height, yOffset);
 
             // Horizontal displacement, acts together with
             // text-anchor: start/end.
             // Offset by circle radius plus a constant.
-            var xOffset = xOffsetSign * (circleRadius + 4);
+            var xOffset = xTranslate + xOffsetSign * (circleRadius + 4);
 
             return 'translate(' + xOffset + ',' + yOffset + ')';
         })
-        .style({'text-anchor': textAnchor});
+        .style({
+            'text-anchor': textAnchor
+        });
+};
+
+exports.hideTooltip = function() {
+    this.d3Objects.tooltip.style('display', 'none');
 };

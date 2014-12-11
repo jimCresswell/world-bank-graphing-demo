@@ -14885,7 +14885,8 @@ module.exports = {
 
     // Legend configuration.
     // The padding between side by side item groups in the legend in px.
-    legendItemPadding: 10,
+    legendItemPadding: 2,
+    legendColumnWidth: 12.5,
 
     hasLegend: true,
 
@@ -15241,7 +15242,7 @@ WorldBankIndicatorChartPrototype.isAtleastWide = function() {
 // positioned above or below the chart.
 WorldBankIndicatorChartPrototype.legendAboveChart = function() {
     var chart = this;
-    if (chart.isAtleastNarrow()) {
+    if (chart.isAtleastMedium()) {
         return true;
     }
     return false;
@@ -15375,7 +15376,7 @@ exports.numLegendColumns = function() {
 
 exports.setLegendWidth = function() {
     var chart = this;
-    var singleColumnEms = 14;
+    var singleColumnEms = chart.config.legendColumnWidth;
     var numColumns = chart.numLegendColumns();
 
     if (numColumns > 1) {
@@ -15389,9 +15390,15 @@ exports.setLegendWidth = function() {
 exports.setLegendRectWidth = function() {
     var chart = this;
     var numColumns = chart.numLegendColumns();
+    var padding = chart.config.legendItemPadding;
     var rectWidth;
 
-    rectWidth = (chart.legendWidth/numColumns) - chart.config.legendItemPadding*(numColumns-1);
+    // More padding if only two columns
+    if (numColumns === 2) {
+        padding *= 2;
+    }
+
+    rectWidth = (chart.legendWidth/numColumns) - padding * (numColumns-1);
 
     // Set the width on the legend item rectangles.
     chart.d3Objects.legend.selectAll('.legend__item rect')

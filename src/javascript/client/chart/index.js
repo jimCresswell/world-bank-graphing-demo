@@ -191,7 +191,7 @@ Chart.prototype.getDimensionsFromDom = function() {
             dimensions.width +
             ', height: ' +
             dimensions.height +
-            ' are invalid. Please set the height and width styles on the SVG element inline or with CSS.'
+            ' are invalid. Please set the height and width styles on the SVG element inline or with CSS (If you are using Firefox < 33 then an upgrade may fix this).'
         );
     }
 
@@ -206,6 +206,7 @@ Chart.prototype.getDimensionsFromDom = function() {
  */
 Chart.prototype.recordDimensions = function() {
     var chart = this;
+
     var currentRecordedDimensions = chart.dimensions;
     var newDimensions = chart.getDimensionsFromDom();
 

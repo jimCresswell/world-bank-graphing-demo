@@ -93,9 +93,6 @@ exports.showTooltip = function(dataPoint) {
                 yOffset = yTranslate + yOffsetSign * (tooltip.node().getBoundingClientRect().height - circleRadius);
             }
 
-             // DEBUG
-            console.log(yOffsetSign, yTranslate, tooltip.node().getBoundingClientRect().height, yOffset);
-
             // Horizontal displacement, acts together with
             // text-anchor: start/end.
             // Offset by circle radius plus a constant.

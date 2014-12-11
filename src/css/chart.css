@@ -18,14 +18,10 @@
     border: 1px solid #c0c0c0;
 }
 
-.chart-container .chart-controls {
-    text-align: left;
-}
-
 /* Tall and thin */
 .chart-container .chart {
-    width: 270px;
-    height: 500px;
+    width: 250px;
+    height: 460px;
 }
 
 
@@ -62,6 +58,7 @@
 
     .chart-container .chart {
         width: 600px;
+        height: 500;
     }
 }
 
@@ -94,6 +91,8 @@
 }
 
 .chart-container fieldset > legend {
+    width: 100%;
+    text-align: center;
     padding-bottom: 1.5em;
 }
 
@@ -107,23 +106,25 @@
 
 .chart-container .control-group .control {
     display: inline-block;
-    margin-left: 1.2em;
+    margin-left: 1em;
     margin-bottom: 1em;
+}
+
+.chart-container .control-group .control:first-of-type {
+    margin-left: 0;
+}
+
+.chart-container .control-group .control:last-of-type {
+    margin-bottom: 0;
 }
 
 .chart-container .control-group .control label {
     margin-right: 0.4em;
 }
 
-.chart-container .control-group .control select {
+.chart-container select {
     width: 8em;
 }
-@media (min-width: 1024px) {
-    .chart-container .control-group .control select {
-        width: 11em;
-    }
-}
-
 
 .axis {
     font-size: 0.8em;

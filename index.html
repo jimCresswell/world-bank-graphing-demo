@@ -53,12 +53,14 @@
               </div>
               <div class="control-group">
                 <span class="control">
-                  <label for="chart1-range-year">year</label>
-                  <span class="control__min-year"></span>
-                  <input type="range" name="year-range" id="chart1-range-year">
-                  <span class="control__max-year"></span>
+                  <label for="chart1-range-year" class="label-year">year</label>
                   <select name="year-select" id="chart1-select-year" class="control__year-select">
                   </select>
+                  <span class="control__range-container">
+                    <span class="control__min-year"></span>
+                    <input type="range" name="year-range" id="chart1-range-year">
+                    <span class="control__max-year"></span>
+                  </span>
                 </span>
                 <span class="control animation-controls">
                   <button type="button" class="timeline play" id="chart1-play" title="play"><span>&#9654;</span></button>

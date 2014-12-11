@@ -30,26 +30,78 @@
 
 
 
-/* Controls */
+/**
+ * Controls
+ */
 
-.chart-container .control-group .control .control__max-year {
-    margin-right: 0.8em;
+
+.chart-container .control-group .control select {
+    width: 10em;
 }
+
+@media (min-width: 520px) {
+  .chart-container .chart-controls {
+    font-size: 0.8rem;
+  }
+  .chart-container .control-group .control select {
+      width: 6em;
+  }
+}
+
+@media (min-width: 768px) {
+  .chart-container .chart-controls {
+    font-size: 1rem;
+  }
+  .chart-container .control-group .control select {
+      width: 8em;
+  }
+}
+
+@media (min-width: 1024px) {
+  .chart-container .control-group .control select {
+      width: 10em;
+  }
+}
+
+
+/* Year controls */
 
 .chart-container .control-group .control .control__year-select {
-  margin-top: 0.8em;
+  margin-right: 0.4em;
 }
+
+.chart-container .control-group .control .control__range-container {
+  display: inline-block;
+  width: 18em;
+  margin-top: 0.4em;
+}
+
+.chart-container .control-group .control .control__range-container input {
+  width: 11em;
+}
+
+@media (min-width: 1024px) {
+  .chart-container .control-group .control .control__year-select {
+    margin-right: 0.8em;
+  }
+}
+
 
 /* Animation controls. */
 
 .chart-container .control-group .animation-controls {
+  font-size: 2rem;
+}
 
+@media (min-width: 768px) {
+  .chart-container .control-group .animation-controls {
+    font-size: 1.2rem;
+  }
 }
 
 .chart-container .control-group .timeline {
-    font-size: 1.3em;
-    height: 2rem;
-    width: 2rem;
+    height: 2em;
+    width: 2em;
     background-color: Coral;
     border: 1px solid #c0c0c0;
     border-radius: 40%;
@@ -60,6 +112,11 @@
   /* Moving play symbol slightly to the right */
   margin-left: 2px;
 }
+
+
+/**
+ * Animations
+ */
 
 @-webkit-keyframes throb {
   0%   { opacity: 1; }

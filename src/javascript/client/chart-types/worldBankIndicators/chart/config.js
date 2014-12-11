@@ -14,7 +14,8 @@ module.exports = {
 
     // Legend configuration.
     // The padding between side by side item groups in the legend in px.
-    legendItemPadding: 10,
+    legendItemPadding: 2,
+    legendColumnWidth: 12.5,
 
     hasLegend: true,
 

@@ -138,7 +138,7 @@ WorldBankIndicatorChartPrototype.isAtleastWide = function() {
 // positioned above or below the chart.
 WorldBankIndicatorChartPrototype.legendAboveChart = function() {
     var chart = this;
-    if (chart.isAtleastNarrow()) {
+    if (chart.isAtleastMedium()) {
         return true;
     }
     return false;
